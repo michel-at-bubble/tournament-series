@@ -183,41 +183,6 @@
     .up-next { width: 38px; font-size: 22px; }
   }
 
-  /* ---------- Upcoming sidebar block (tournaments tab) ---------- */
-  .upcoming-sidebar-block {
-    background: rgba(248,104,8,.07);
-    border: 1px solid rgba(248,104,8,.22);
-    border-radius: 6px;
-    margin-bottom: 8px;
-    overflow: hidden;
-    /* Compact ticker height so the sidebar doesn't grow too large */
-    height: 56px; min-height: 56px;
-  }
-  .upcoming-sidebar-head {
-    font-family: 'Bebas Neue', sans-serif;
-    font-size: 12px; letter-spacing: .12em;
-    padding: 7px 10px 5px;
-    color: var(--orange);
-  }
-  .upcoming-sidebar-item {
-    display: flex; flex-direction: column; gap: 1px;
-    padding: 7px 10px;
-    border-top: 1px solid rgba(248,104,8,.12);
-    text-decoration: none; color: var(--navy);
-    transition: background .12s;
-  }
-  .upcoming-sidebar-item:hover { background: rgba(248,104,8,.12); }
-  .upcoming-sidebar-name { font-weight: 600; font-size: 14px; line-height: 1.25; }
-  .upcoming-sidebar-date { font-style: italic; font-size: 12px; color: var(--steel); }
-
-  /* Sidebar ticker (compact) — shows one entry at a time and rotates */
-  .upcoming-sidebar-viewport { position: relative; overflow: hidden; height: 56px; }
-  .up-sidebar-track { position: relative; height: 100%; }
-  .up-s-item { position: absolute; inset: 0; display: flex; align-items: center; padding: 8px 10px; white-space: nowrap; opacity: 0; transition: opacity .45s ease; pointer-events: none; }
-  .up-s-item.active { opacity: 1; pointer-events: auto; }
-  .up-s-item .up-entry { padding: 0; }
-  .upcoming-sidebar-block:hover { background: rgba(248,104,8,.12); }
-
   /* ---------- Panels ---------- */
   .panel { display: none; animation: rise .4s ease both; }
   .panel.show { display: block; }
@@ -258,9 +223,38 @@
     transition: all .15s ease;
   }
   .show-more:hover { background: rgba(0,85,212,.1); border-color: var(--cobalt); }
+  .retry {
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 120px; margin-top: 14px; padding: 10px 16px;
+    border: 1px solid rgba(0,85,212,.28); border-radius: 8px;
+    background: rgba(255,255,255,.95); color: var(--navy);
+    cursor: pointer; font-size: 14px; transition: all .15s ease;
+  }
+  .retry:hover { background: rgba(0,85,212,.08); border-color: var(--cobalt); }
   .show-future { margin-top: 0; margin-bottom: 6px; }
   .show-future.on { background: rgba(0,85,212,.12); }
   .results-main { flex: 1 1 auto; min-width: 0; }
+  #results-host { position: relative; }
+  #results-host.loading .tablecard {
+    filter: grayscale(.35) brightness(1.05);
+    opacity: .75;
+  }
+  .loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(255,255,255,.72);
+    backdrop-filter: blur(1px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    z-index: 1;
+  }
+  .loading-overlay .state {
+    padding: 0;
+    background: transparent;
+    color: var(--ink);
+  }
 .standings-meta {
     font-style: italic; color: var(--steel); font-size: 15px;
     text-align: center; margin-bottom: 14px;
@@ -334,6 +328,14 @@
     .sidebar.collapsed { max-height: none !important; }
     .sidebar.collapsed::after { display: none; }
     .show-more { display: none; }
+  .retry {
+    display: inline-flex; align-items: center; justify-content: center;
+    margin-top: 14px; padding: 10px 16px;
+    border: 1px solid rgba(0,85,212,.28); border-radius: 8px;
+    background: rgba(255,255,255,.95); color: var(--navy);
+    cursor: pointer; font-size: 14px; transition: all .15s ease;
+  }
+  .retry:hover { background: rgba(0,85,212,.08); border-color: var(--cobalt); }
 
     /* Show the picker button; hide the list until opened */
     .mobile-picker {
@@ -458,6 +460,15 @@
     font-size: 13px; color: var(--steel); font-style: italic;
   }
   footer a { color: var(--cobalt); }
+  .footer-action {
+    margin-left: 10px; padding: 0; border: none;
+    background: transparent; color: var(--cobalt);
+    cursor: pointer; font: inherit; text-decoration: underline;
+  }
+  .footer-action:hover { color: var(--navy); }
+  .footer-status {
+    margin-left: 12px; color: var(--steel); font-size: 13px;
+  }
 </style>
 </head>
 <body>
@@ -498,7 +509,6 @@
             <span id="mobile-picker-label">Kies toernooi</span><span class="mp-caret">▾</span>
           </button>
           <div class="sidebar-collapsible" id="sidebar-collapsible">
-            <div id="upcoming-sidebar" hidden></div>
             <button class="show-more show-future" id="show-future" hidden></button>
             <div class="sidebar" id="tourney-list"></div>
             <button class="show-more" id="show-more" hidden></button>
@@ -512,7 +522,9 @@
     </section>
 
     <footer id="t-footer">
-      Data live uit de officiële Google Sheet · ververst bij elke pagina-lading.
+      Data uit de officiële Google Sheet · tijdelijk gecached tijdens deze sessie.
+      <button id="clear-cache" class="footer-action">Cache wissen</button>
+      <span id="footer-status" class="footer-status"></span>
     </footer>
   </div>
 
@@ -585,7 +597,9 @@ const TRANSLATIONS = {
     tabResults:   "Toernooien",
     standingsTitle: "Competitiestand",
     standingsAfter: "Stand na",
-    footer:   "Data live uit de officiële Google Sheet · ververst bij elke pagina-lading.",
+    footer:   "Data uit de officiële Google Sheet · 15 minuten in deze browser gecached.",
+    clearCache: "Cache wissen",
+    cacheCleared: "Cache gewist.",
     showMore: "Toon meer ▾",
     showLess: "Toon minder ▴",
     showFuture:  "Toon toekomstige toernooien ▾",
@@ -597,6 +611,8 @@ const TRANSLATIONS = {
     noResults: "Nog geen resultaten beschikbaar.",
     errResults: "De resultaten konden niet worden geladen.",
     errResultsHint: 'Controleer of de Sheet gedeeld is ("iedereen met de link → bekijken") en of de tab bestaat met de juiste kolomkoppen.',
+    errTimeout: "Google Sheets aanvraag is verlopen.",
+    retry: "Opnieuw proberen",
     errList: "De toernooienlijst kon niet worden geladen.",
     errListHint: "Controleer of het Toernooien-tabblad bestaat en publiek leesbaar is.",
     flagUpcoming: "Aankomend toernooi",
@@ -618,7 +634,9 @@ const TRANSLATIONS = {
     tabResults:   "Tournaments",
     standingsTitle: "League standings",
     standingsAfter: "Standings after",
-    footer:   "Live data from the official Google Sheet · refreshed on every page load.",
+    footer:   "Data from the official Google Sheet · temporarily cached during this session.",
+    clearCache: "Clear cache",
+    cacheCleared: "Cache cleared.",
     showMore: "Show more ▾",
     showLess: "Show less ▴",
     showFuture:  "Show upcoming tournaments ▾",
@@ -630,6 +648,8 @@ const TRANSLATIONS = {
     noResults: "No results available yet.",
     errResults: "The results could not be loaded.",
     errResultsHint: 'Check that the Sheet is shared ("anyone with the link → viewer") and that the tab exists with the right column headers.',
+    errTimeout: "Google Sheets request timed out.",
+    retry: "Retry",
     errList: "The tournament list could not be loaded.",
     errListHint: "Check that the Tournaments tab exists and is publicly readable.",
     flagUpcoming: "Upcoming tournament",
@@ -650,6 +670,61 @@ const TRANSLATIONS = {
 let LANG = (navigator.language || "en").toLowerCase().startsWith("nl") ? "nl" : "en";
 const t = (k) => TRANSLATIONS[LANG][k];
 const tcol = (key) => TRANSLATIONS[LANG].cols[key] ?? key;
+const LOCAL_CACHE_KEY = "series-tab-cache-v1";
+const CACHE_EXPIRE_MS = 15 * 60 * 1000;
+const TAB_CACHE = new Map();
+const FETCH_TIMEOUT_MS = 15000;
+
+function readLocalCache() {
+  if (typeof localStorage === "undefined") return {};
+  try {
+    return JSON.parse(localStorage.getItem(LOCAL_CACHE_KEY) || "{}") || {};
+  } catch {
+    return {};
+  }
+}
+function writeLocalCache(cache) {
+  if (typeof localStorage === "undefined") return;
+  try {
+    localStorage.setItem(LOCAL_CACHE_KEY, JSON.stringify(cache));
+  } catch {
+    // ignore localStorage failures
+  }
+}
+function getCachedTab(key) {
+  if (TAB_CACHE.has(key)) return TAB_CACHE.get(key);
+  const cache = readLocalCache();
+  const entry = cache[key];
+  if (!entry || typeof entry.ts !== "number" || !entry.value) return null;
+  if (Date.now() - entry.ts > CACHE_EXPIRE_MS) {
+    delete cache[key];
+    writeLocalCache(cache);
+    return null;
+  }
+  TAB_CACHE.set(key, entry.value);
+  return entry.value;
+}
+function setCachedTab(key, value) {
+  TAB_CACHE.set(key, value);
+  const cache = readLocalCache();
+  cache[key] = { ts: Date.now(), value };
+  for (const k of Object.keys(cache)) {
+    if (Date.now() - cache[k].ts > CACHE_EXPIRE_MS) delete cache[k];
+  }
+  writeLocalCache(cache);
+}
+function clearCache() {
+  TAB_CACHE.clear();
+  if (typeof localStorage !== "undefined") {
+    try { localStorage.removeItem(LOCAL_CACHE_KEY); } catch {}
+  }
+  const status = document.getElementById("footer-status");
+  if (!status) return;
+  status.textContent = t("cacheCleared");
+  setTimeout(() => {
+    if (status.textContent === t("cacheCleared")) status.textContent = "";
+  }, 3000);
+}
 
 // Accepts either a tab name (string) or {gid:"..."} to target a tab.
 const gvizURL = (target) => {
@@ -681,7 +756,22 @@ function parseCSV(text) {
 
 // Fetch a tab and return {headers:[], rows:[{}]}
 async function fetchTab(target) {
-  const res = await fetch(gvizURL(target));
+  const key = typeof target === "string" ? target : `gid:${target.gid}`;
+  const cached = getCachedTab(key);
+  if (cached) return cached;
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch(gvizURL(target), { signal: controller.signal });
+  } catch (err) {
+    if (err.name === "AbortError") throw new Error("timeout");
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const txt = await res.text();
   if (txt.trim().startsWith("<")) throw new Error("not-public"); // got an HTML error page
@@ -691,7 +781,9 @@ async function fetchTab(target) {
   const rows = grid.slice(1).map(r => {
     const o = {}; headers.forEach((h, i) => o[h] = (r[i] ?? "").trim()); return o;
   });
-  return { headers, rows };
+  const result = { headers, rows };
+  setCachedTab(key, result);
+  return result;
 }
 
 function medalClass(i) {
@@ -761,12 +853,35 @@ function renderTable(host, cols, rows, opts = {}) {
 }
 
 function loading(host, msg) {
-  host.innerHTML = `<div class="state"><div class="spinner"></div>${msg}</div>`;
+  const currentTable = host.querySelector('.tablecard');
+  if (currentTable) {
+    host.classList.add('loading');
+    let overlay = host.querySelector('.loading-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.className = 'loading-overlay';
+      host.appendChild(overlay);
+    }
+    overlay.innerHTML = `<div class="state"><div class="spinner"></div>${msg}</div>`;
+  } else {
+    host.innerHTML = `<div class="state"><div class="spinner"></div>${msg}</div>`;
+  }
 }
-function errorState(host, tab) {
+function clearLoadingOverlay(host) {
+  host.classList.remove('loading');
+  const overlay = host.querySelector('.loading-overlay');
+  if (overlay) overlay.remove();
+}
+function errorState(host, tab, err) {
+  clearLoadingOverlay(host);
+  const isTimeout = err && err.message === "timeout";
   host.innerHTML =
     `<div class="state err">${t("errResults")}
-      <span class="small">${t("errResultsHint")} ("<b>${esc(tab)}</b>")</span></div>`;
+      <span class="small">${isTimeout ? t("errTimeout") : t("errResultsHint")} ${isTimeout ? "" : `(\"<b>${esc(tab)}</b>\")`}</span>` +
+      (isTimeout ? `<button class="retry">${t("retry")}</button>` : "") +
+    `</div>`;
+  const retryBtn = host.querySelector(".retry");
+  if (retryBtn) retryBtn.addEventListener("click", () => loadResults(tab));
 }
 
 async function loadStandings() {
@@ -809,18 +924,23 @@ async function loadResults(tab, meta) {
     });
     const sel = TOURNAMENTS.find(it => it.tab === tab);
     const caption = sel ? { name: sel.name, date: sel.date ? fmtDate(sel.date) : "" } : null;
+    clearLoadingOverlay(host);
     renderTable(host, cols, rows, { medals: true, caption });
-    syncSidebarHeight();
+    if (currentView === "results") {
+      sidebarHeightSynced = true;
+      syncSidebarHeight();
+    }
   } catch (e) {
     errorState(host, tab);
-    syncSidebarHeight();
   }
 }
 
 // Match the collapsed sidebar height to the results table; show "toon meer"
 // only when the list is genuinely taller than the table beside it.
 let sidebarExpanded = false;
+let sidebarHeightSynced = false;
 function syncSidebarHeight() {
+  if (currentView !== "results") return;
   const sidebar = document.getElementById("tourney-list");
   const main = document.querySelector(".results-main");
   const btn = document.getElementById("show-more");
@@ -957,6 +1077,7 @@ function renderTournamentList() {
 
   visible.forEach(it => {
     const btn = document.createElement("button");
+    btn.dataset.tab = it.tab;
     btn.className = "tourney-item"
       + (it.tab === selectedTab ? " active" : "")
       + (it.st.clickable ? "" : " disabled");
@@ -967,12 +1088,9 @@ function renderTournamentList() {
       (it.date ? `<span class="ti-date">${fmtDate(it.date)}</span>` : ``);
     if (it.st.clickable) {
       btn.addEventListener("click", () => {
-        selectedTab = it.tab;
-        document.querySelectorAll(".tourney-item").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
+        setSelectedTournament(it.tab);
         loadResults(it.tab);
         writeHash();
-        updateMobilePicker();
         closeMobilePicker();
       });
     } else {
@@ -994,8 +1112,16 @@ function renderTournamentList() {
   // Future toggle: only relevant if any future tournaments exist.
   futureBtn.hidden = true;
 
-  syncSidebarHeight();
+  if (currentView === "results") syncSidebarHeight();
   updateMobilePicker();
+}
+
+function setSelectedTournament(tab, { write = false } = {}) {
+  selectedTab = tab;
+  document.querySelectorAll(".tourney-item").forEach(b =>
+    b.classList.toggle("active", b.dataset.tab === tab));
+  updateMobilePicker();
+  if (write) writeHash();
 }
 
 document.getElementById("show-future").addEventListener("click", () => {
@@ -1037,24 +1163,8 @@ function renderStandingsMeta() {
   el.hidden = false;
 }
 
-// ---- Upcoming tournament banners (two styles, for comparison) ----
+// ---- Upcoming tournament banners ----
 let rotatorTimer = null;
-let sidebarRotatorTimer = null;
-let sidebarRotatorIdx = 0;
-function rotateSidebarTo(i) {
-  const items = document.querySelectorAll("#upcoming-sidebar .up-s-item");
-  if (!items.length) return;
-  items[sidebarRotatorIdx]?.classList.remove("active");
-  sidebarRotatorIdx = (i + items.length) % items.length;
-  items[sidebarRotatorIdx].classList.add("active");
-}
-function startSidebarRotator(count) {
-  if (sidebarRotatorTimer) clearInterval(sidebarRotatorTimer);
-  if (count > 1) sidebarRotatorTimer = setInterval(() => rotateSidebarTo(sidebarRotatorIdx + 1), 3800);
-}
-function stopSidebarRotator() {
-  if (sidebarRotatorTimer) { clearInterval(sidebarRotatorTimer); sidebarRotatorTimer = null; }
-}
 function upcomingList() {
   // Upcoming = future date; soonest first.
   return TOURNAMENTS.filter(it => it.isFuture)
@@ -1101,32 +1211,6 @@ function renderUpcoming() {
     rotator.onmouseleave = () => startRotator(list.length);
   }
 
-  // ---- Sidebar block (tournaments tab) ----
-  const sidebarEl = document.getElementById("upcoming-sidebar");
-  if (!list.length) {
-    sidebarEl.hidden = true;
-    stopSidebarRotator();
-  } else {
-    sidebarEl.hidden = currentView !== "results";
-    if (sidebarEl.hidden) {
-      // If hidden (we're not on results view) make sure the sidebar rotator is stopped.
-      stopSidebarRotator();
-    } else {
-      // Compact rotating sidebar: one item visible at a time
-      sidebarEl.innerHTML =
-        `<div class="upcoming-sidebar-block">` +
-        `<div class="upcoming-sidebar-head">🕜 ${esc(t("upcomingLabel"))}</div>` +
-        `<div class="upcoming-sidebar-viewport"><div class="up-sidebar-track">` +
-        list.map((it, i) =>
-          `<div class="up-s-item${i === 0 ? " active" : ""}">${upEntryHTML(it)}</div>`
-        ).join("") +
-        `</div></div></div>`;
-      sidebarRotatorIdx = 0;
-      startSidebarRotator(list.length);
-      sidebarEl.onmouseenter = () => stopSidebarRotator();
-      sidebarEl.onmouseleave = () => startSidebarRotator(list.length);
-    }
-  }
 }
 
 // Manual advance: go to next and restart the auto-timer so it doesn't
@@ -1144,15 +1228,13 @@ function switchView(view, { write = true } = {}) {
     b.classList.toggle("active", b.dataset.view === view));
   document.querySelectorAll(".panel").forEach(p => p.classList.remove("show"));
   document.getElementById("panel-" + view).classList.add("show");
-  // Toggle ticker placement: rotator on standings, sidebar block on results.
+  // Toggle ticker placement: rotator only on standings.
   if (TOURNAMENTS.length) {
     const hasUp = upcomingList().length > 0;
     document.getElementById("upcoming-rotator").hidden  = !hasUp || view !== "standings";
-    document.getElementById("upcoming-sidebar").hidden  = !hasUp || view !== "results";
   }
   // Ensure timers are not running for hidden tickers.
   if (view !== "standings" && rotatorTimer) { clearInterval(rotatorTimer); rotatorTimer = null; }
-  if (view !== "results") stopSidebarRotator();
   if (view === "results") syncSidebarHeight();
   if (write) writeHash();
 }
@@ -1190,7 +1272,10 @@ function applyStaticLang() {
   document.getElementById("t-tagline").innerHTML     = t("tagline");
   document.getElementById("t-tab-standings").textContent = t("tabStandings");
   document.getElementById("t-tab-results").textContent   = t("tabResults");
-  document.getElementById("t-footer").innerHTML      = t("footer");
+  document.getElementById("t-footer").innerHTML =
+    `${t("footer")}<button id="clear-cache" class="footer-action">${t("clearCache")}</button>` +
+    `<span id="footer-status" class="footer-status"></span>`;
+  document.getElementById("clear-cache").onclick = clearCache;
   document.getElementById("lang-nl").classList.toggle("active", LANG === "nl");
   document.getElementById("lang-en").classList.toggle("active", LANG === "en");
 }
@@ -1257,29 +1342,20 @@ window.addEventListener("hashchange", () => {
     const match = TOURNAMENTS.find(it => it.tab === h.tab && it.st.clickable);
     if (match) {
       selectedTab = match.tab;
-      renderTournamentList();
+      if (document.querySelectorAll(".tourney-item").length) {
+        setSelectedTournament(match.tab);
+      } else {
+        renderTournamentList();
+      }
       loadResults(match.tab);
     }
   }
 });
 
-// Keep the sidebar height in step with the results table. A ResizeObserver
-// fires whenever the table's height settles — after async data loads, after
-// webfonts swap in, on window resize — which makes the first-load "Toon meer"
-// reliable instead of depending on a single well-timed measurement.
-(function observeResultsHeight() {
-  const main = document.querySelector(".results-main");
-  if (!main || typeof ResizeObserver === "undefined") {
-    if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncSidebarHeight);
-    window.addEventListener("load", syncSidebarHeight);
-    return;
-  }
-  let last = 0;
-  const ro = new ResizeObserver(() => {
-    const h = main.offsetHeight;
-    if (Math.abs(h - last) > 2) { last = h; syncSidebarHeight(); }
-  });
-  ro.observe(main);
+// Keep the sidebar height in step with the results table on initial load.
+(function initSidebarHeightSync() {
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncSidebarHeight);
+  window.addEventListener("load", syncSidebarHeight);
 })();
 
 
