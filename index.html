@@ -57,7 +57,7 @@
   /* ---------- Header ---------- */
   header {
     position: relative;
-    padding: 54px 20px 38px;
+    padding: 28px 20px 22px;
     text-align: center;
     overflow: hidden;
   }
@@ -86,8 +86,8 @@
     box-shadow: 0 1px 0 rgba(1,0,80,.15);
   }
   .crest-logo {
-    display: block; margin: 0 auto 14px;
-    width: clamp(82px, 14vw, 116px); height: auto;
+    display: block; margin: 0 auto 10px;
+    width: clamp(60px, 10vw, 84px); height: auto;
     filter: drop-shadow(0 6px 14px rgba(1,0,80,.35));
     transition: transform .25s cubic-bezier(.34,1.56,.64,1);
   }
@@ -110,7 +110,7 @@
   /* ---------- Tabs / nav ---------- */
   nav.viewtabs {
     display: flex; gap: 8px; justify-content: center;
-    flex-wrap: wrap; margin: 8px 0 34px;
+    flex-wrap: wrap; margin: 6px 0 18px;
   }
   .vtab {
     font-family: 'Bebas Neue', sans-serif;
@@ -130,17 +130,20 @@
   /* ---------- Upcoming tournament banner (rotator) ---------- */
   .upcoming-rotator {
     display: flex; align-items: stretch; gap: 0;
-    max-width: 760px; margin: 0 auto 22px;
-    background: rgba(255,255,255,.5);
-    border: 1px solid rgba(1,0,80,.14); border-radius: 999px;
+    max-width: 760px; margin: 0 auto 14px;
+    background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,239,222,.95));
+    border: 1px solid rgba(248,104,8,.22); border-radius: 999px;
     overflow: hidden;
-    box-shadow: 0 4px 14px -8px var(--shadow);
+    box-shadow: 0 6px 24px -12px rgba(248,104,8,.55), 0 4px 14px -8px var(--shadow);
+  }
+  .upcoming-rotator:hover {
+    box-shadow: 0 10px 30px -12px rgba(248,104,8,.55), 0 4px 14px -8px var(--shadow);
   }
   .up-label {
     flex: 0 0 auto; display: flex; align-items: center; gap: 6px;
     font-family: 'Bebas Neue', sans-serif; letter-spacing: .12em; font-size: 14px;
     padding: 9px 16px; color: var(--white);
-    background: var(--navy); white-space: nowrap;
+    background: var(--orange); white-space: nowrap;
   }
   .up-label::before { content: "🏆"; font-size: 13px; }
 
@@ -159,9 +162,9 @@
     width: 42px; border: none; background: transparent;
     color: var(--cobalt); font-size: 26px; line-height: 1;
     transition: all .15s ease;
-    border-left: 1px solid rgba(1,0,80,.1);
+    border-left: 1px solid rgba(248,104,8,.2);
   }
-  .up-next:hover { color: var(--orange); background: rgba(0,85,212,.08); }
+  .up-next:hover { color: var(--white); background: var(--orange); }
 
   /* Shared item appearance */
   .up-entry {
@@ -179,6 +182,41 @@
     .up-entry { font-size: 14px; padding: 8px 14px; }
     .up-next { width: 38px; font-size: 22px; }
   }
+
+  /* ---------- Upcoming sidebar block (tournaments tab) ---------- */
+  .upcoming-sidebar-block {
+    background: rgba(248,104,8,.07);
+    border: 1px solid rgba(248,104,8,.22);
+    border-radius: 6px;
+    margin-bottom: 8px;
+    overflow: hidden;
+    /* Compact ticker height so the sidebar doesn't grow too large */
+    height: 56px; min-height: 56px;
+  }
+  .upcoming-sidebar-head {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 12px; letter-spacing: .12em;
+    padding: 7px 10px 5px;
+    color: var(--orange);
+  }
+  .upcoming-sidebar-item {
+    display: flex; flex-direction: column; gap: 1px;
+    padding: 7px 10px;
+    border-top: 1px solid rgba(248,104,8,.12);
+    text-decoration: none; color: var(--navy);
+    transition: background .12s;
+  }
+  .upcoming-sidebar-item:hover { background: rgba(248,104,8,.12); }
+  .upcoming-sidebar-name { font-weight: 600; font-size: 14px; line-height: 1.25; }
+  .upcoming-sidebar-date { font-style: italic; font-size: 12px; color: var(--steel); }
+
+  /* Sidebar ticker (compact) — shows one entry at a time and rotates */
+  .upcoming-sidebar-viewport { position: relative; overflow: hidden; height: 56px; }
+  .up-sidebar-track { position: relative; height: 100%; }
+  .up-s-item { position: absolute; inset: 0; display: flex; align-items: center; padding: 8px 10px; white-space: nowrap; opacity: 0; transition: opacity .45s ease; pointer-events: none; }
+  .up-s-item.active { opacity: 1; pointer-events: auto; }
+  .up-s-item .up-entry { padding: 0; }
+  .upcoming-sidebar-block:hover { background: rgba(248,104,8,.12); }
 
   /* ---------- Panels ---------- */
   .panel { display: none; animation: rise .4s ease both; }
@@ -223,18 +261,25 @@
   .show-future { margin-top: 0; margin-bottom: 6px; }
   .show-future.on { background: rgba(0,85,212,.12); }
   .results-main { flex: 1 1 auto; min-width: 0; }
-  .results-date {
-    font-style: italic; color: var(--steel); font-size: 15px; white-space: nowrap;
-  }
-  .standings-meta {
+.standings-meta {
     font-style: italic; color: var(--steel); font-size: 15px;
     text-align: center; margin-bottom: 14px;
   }
   .standings-meta b { font-style: normal; color: var(--ink); }
-  .results-head {
-    flex-direction: column; align-items: center; text-align: center; gap: 2px;
+  /* Caption inside the tablecard (tournament name + date) */
+  .tablecard-caption {
+    display: flex; align-items: baseline; justify-content: space-between;
+    gap: 10px; padding: 12px 18px 10px;
+    border-bottom: 1px solid rgba(1,0,80,.10);
   }
-  .results-head h2 { text-align: center; }
+  .tablecard-caption-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(18px, 3vw, 26px);
+    letter-spacing: .04em; color: var(--navy); line-height: 1;
+  }
+  .tablecard-caption-date {
+    font-style: italic; color: var(--steel); font-size: 14px; white-space: nowrap;
+  }
 
   .tourney-item {
     text-align: left; cursor: pointer; width: 100%;
@@ -313,7 +358,8 @@
     .col-nafnr, .col-nafnumber, .col-team { display: none; }
     .results-main table,
     #standings-host table { min-width: 0; }
-    .results-head h2 { font-size: clamp(26px, 8vw, 40px); }
+    .tablecard-caption { padding: 10px 14px 8px; }
+    .tablecard-caption-name { font-size: clamp(16px, 5vw, 22px); }
   }
 
   /* ---------- Table ---------- */
@@ -426,17 +472,17 @@
   </header>
 
   <div class="wrap">
-    <nav class="viewtabs">
-      <button class="vtab active" data-view="standings" id="t-tab-standings">Competitiestand</button>
-      <button class="vtab" data-view="results" id="t-tab-results">Toernooien</button>
-    </nav>
-
-    <!-- Upcoming tournaments — rotator (one at a time, soft fade) -->
+    <!-- Upcoming rotator — full-width, shown on standings tab only -->
     <div class="upcoming-rotator" id="upcoming-rotator" hidden>
       <span class="up-label" id="up-label-1">Aankomend</span>
       <div class="up-rotate-viewport"><div class="up-rotate-track" id="up-rotate-track"></div></div>
       <button class="up-next" id="up-next" aria-label="Volgende">›</button>
     </div>
+
+    <nav class="viewtabs">
+      <button class="vtab active" data-view="standings" id="t-tab-standings">Competitiestand</button>
+      <button class="vtab" data-view="results" id="t-tab-results">Toernooien</button>
+    </nav>
 
     <!-- STANDINGS -->
     <section class="panel show" id="panel-standings">
@@ -446,16 +492,13 @@
 
     <!-- RESULTS -->
     <section class="panel" id="panel-results">
-      <div class="panel-head results-head">
-        <h2 id="results-title">Eindstand</h2>
-        <span class="results-date" id="results-date"></span>
-      </div>
       <div class="results-layout">
         <aside class="sidebar-wrap" id="sidebar-wrap">
           <button class="mobile-picker" id="mobile-picker" aria-expanded="false">
             <span id="mobile-picker-label">Kies toernooi</span><span class="mp-caret">▾</span>
           </button>
           <div class="sidebar-collapsible" id="sidebar-collapsible">
+            <div id="upcoming-sidebar" hidden></div>
             <button class="show-more show-future" id="show-future" hidden></button>
             <div class="sidebar" id="tourney-list"></div>
             <button class="show-more" id="show-more" hidden></button>
@@ -508,7 +551,8 @@ const CONFIG = {
     dateCol: "Datum",        // when the tournament is/was held (shown in sidebar)
     expiryCol: "Vervaldatum",// counts toward standings until this date passes
     countCol: "Aantal deelnemers", // filled once results are entered
-    urlCol: "URL",           // optional: link to a tournament info page
+    nafLinkCol: "Naf link",  // primary URL for the ticker (overrides urlCol)
+    urlCol: "URL",           // fallback link to a tournament info page
     urlPlaceholder: "https://member.thenaf.net/index.php?module=NAF&type=tournaments&nation=Netherlands",
     dateFormat: "DMY",       // dates are dd-mm-yyyy in the sheet
   },
@@ -684,7 +728,7 @@ function renderTable(host, cols, rows, opts = {}) {
     let cls = opts.medals ? medalClass(ri) : "";
     // Wooden spoon on the very last row, but not if that row already
     // carries a top-4 medal (i.e. very short lists).
-    if (opts.medals && ri === rows.length - 1 && !cls) cls = "spoon";
+    if (opts.medals && !opts.noSpoon && ri === rows.length - 1 && !cls) cls = "spoon";
     const tds = allCols.map((c, ci) => {
       let v, klass = "";
       if (c._auto) { v = String(ri + 1); klass = "pos"; }
@@ -707,8 +751,13 @@ function renderTable(host, cols, rows, opts = {}) {
     }).join("");
     return `<tr class="${cls}">${tds}</tr>`;
   }).join("");
+  const captionHTML = opts.caption
+    ? `<div class="tablecard-caption">` +
+      `<span class="tablecard-caption-name">${esc(opts.caption.name)}</span>` +
+      (opts.caption.date ? `<span class="tablecard-caption-date">${esc(opts.caption.date)}</span>` : ``) +
+      `</div>` : ``;
   host.innerHTML =
-    `<div class="tablecard"><table><thead><tr>${thead}</tr></thead><tbody>${body}</tbody></table></div>`;
+    `<div class="tablecard">${captionHTML}<table><thead><tr>${thead}</tr></thead><tbody>${body}</tbody></table></div>`;
 }
 
 function loading(host, msg) {
@@ -732,7 +781,7 @@ async function loadStandings() {
       return Number.isFinite(n) && n >= 1;
     });
     if (CONFIG.STANDINGS_SORT_DESC) rows = sortDesc(rows, CONFIG.STANDINGS_SORT_DESC);
-    renderTable(host, CONFIG.STANDINGS_COLUMNS, rows, { medals: true, autoPos: true });
+    renderTable(host, CONFIG.STANDINGS_COLUMNS, rows, { medals: true, autoPos: true, noSpoon: true });
   } catch (e) {
     errorState(host, CONFIG.STANDINGS_TAB);
   }
@@ -758,7 +807,9 @@ async function loadResults(tab, meta) {
       if (!drop.has(c.col)) return true;
       return rows.some(r => (r[c.col] || "").trim() !== "");
     });
-    renderTable(host, cols, rows, { medals: true });
+    const sel = TOURNAMENTS.find(it => it.tab === tab);
+    const caption = sel ? { name: sel.name, date: sel.date ? fmtDate(sel.date) : "" } : null;
+    renderTable(host, cols, rows, { medals: true, caption });
     syncSidebarHeight();
   } catch (e) {
     errorState(host, tab);
@@ -863,8 +914,9 @@ async function loadTournamentList() {
       const hasResults = idx.countCol ? (r[idx.countCol] || "").trim() !== "" : true;
       const st     = tournamentStatus(date, expiry, hasResults, today);
       const isFuture = !!(date && date > today);
-      const url = (idx.urlCol && (r[idx.urlCol] || "").trim())
-        ? r[idx.urlCol].trim() : (idx.urlPlaceholder || "");
+      const nafLink = (idx.nafLinkCol && (r[idx.nafLinkCol] || "").trim()) ? r[idx.nafLinkCol].trim() : "";
+      const url = nafLink
+        || ((idx.urlCol && (r[idx.urlCol] || "").trim()) ? r[idx.urlCol].trim() : (idx.urlPlaceholder || ""));
       return { tab, name, date, st, hasResults, isFuture, url };
     });
 
@@ -901,7 +953,7 @@ function renderTournamentList() {
   if (!TOURNAMENTS.length) return;
   listHost.innerHTML = "";
 
-  const visible = TOURNAMENTS.filter(it => showFuture || !it.isFuture);
+  const visible = TOURNAMENTS.filter(it => !it.isFuture);
 
   visible.forEach(it => {
     const btn = document.createElement("button");
@@ -918,8 +970,6 @@ function renderTournamentList() {
         selectedTab = it.tab;
         document.querySelectorAll(".tourney-item").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-        document.getElementById("results-title").textContent = it.name;
-        document.getElementById("results-date").textContent = it.date ? fmtDate(it.date) : "";
         loadResults(it.tab);
         writeHash();
         updateMobilePicker();
@@ -942,17 +992,8 @@ function renderTournamentList() {
     legend.map(l => `<span>${l.flag} ${t(l.key)}</span>`).join("");
 
   // Future toggle: only relevant if any future tournaments exist.
-  const anyFuture = TOURNAMENTS.some(it => it.isFuture);
-  futureBtn.hidden = !anyFuture;
-  futureBtn.textContent = showFuture ? t("hideFuture") : t("showFuture");
-  futureBtn.classList.toggle("on", showFuture);
+  futureBtn.hidden = true;
 
-  // Update the selected title/date in case it changed language.
-  const sel = TOURNAMENTS.find(it => it.tab === selectedTab);
-  if (sel) {
-    document.getElementById("results-title").textContent = sel.name;
-    document.getElementById("results-date").textContent = sel.date ? fmtDate(sel.date) : "";
-  }
   syncSidebarHeight();
   updateMobilePicker();
 }
@@ -998,6 +1039,22 @@ function renderStandingsMeta() {
 
 // ---- Upcoming tournament banners (two styles, for comparison) ----
 let rotatorTimer = null;
+let sidebarRotatorTimer = null;
+let sidebarRotatorIdx = 0;
+function rotateSidebarTo(i) {
+  const items = document.querySelectorAll("#upcoming-sidebar .up-s-item");
+  if (!items.length) return;
+  items[sidebarRotatorIdx]?.classList.remove("active");
+  sidebarRotatorIdx = (i + items.length) % items.length;
+  items[sidebarRotatorIdx].classList.add("active");
+}
+function startSidebarRotator(count) {
+  if (sidebarRotatorTimer) clearInterval(sidebarRotatorTimer);
+  if (count > 1) sidebarRotatorTimer = setInterval(() => rotateSidebarTo(sidebarRotatorIdx + 1), 3800);
+}
+function stopSidebarRotator() {
+  if (sidebarRotatorTimer) { clearInterval(sidebarRotatorTimer); sidebarRotatorTimer = null; }
+}
 function upcomingList() {
   // Upcoming = future date; soonest first.
   return TOURNAMENTS.filter(it => it.isFuture)
@@ -1024,26 +1081,52 @@ function startRotator(count) {
   if (count > 1) rotatorTimer = setInterval(() => rotateTo(rotatorIdx + 1), 3500);
 }
 function renderUpcoming() {
-  const rotator = document.getElementById("upcoming-rotator");
   const list = upcomingList();
-  document.getElementById("up-label-1").textContent = t("upcomingLabel");
 
+  // ---- Full-width rotator (standings tab) ----
+  const rotator = document.getElementById("upcoming-rotator");
+  document.getElementById("up-label-1").textContent = t("upcomingLabel");
   if (!list.length) {
     rotator.hidden = true;
     if (rotatorTimer) clearInterval(rotatorTimer);
-    return;
+  } else {
+    rotator.hidden = currentView !== "standings";
+    const rTrack = document.getElementById("up-rotate-track");
+    rTrack.innerHTML = list.map((it, i) =>
+      `<div class="up-item${i === 0 ? " active" : ""}">${upEntryHTML(it)}</div>`).join("");
+    rotatorIdx = 0;
+    startRotator(list.length);
+    document.getElementById("up-next").style.display = list.length > 1 ? "" : "none";
+    rotator.onmouseenter = () => { if (rotatorTimer) clearInterval(rotatorTimer); };
+    rotator.onmouseleave = () => startRotator(list.length);
   }
-  rotator.hidden = false;
 
-  const rTrack = document.getElementById("up-rotate-track");
-  rTrack.innerHTML = list.map((it, i) =>
-    `<div class="up-item${i === 0 ? " active" : ""}">${upEntryHTML(it)}</div>`).join("");
-  rotatorIdx = 0;
-  startRotator(list.length);
-
-  // Show/enable the next button only when there's more than one.
-  const next = document.getElementById("up-next");
-  next.style.display = list.length > 1 ? "" : "none";
+  // ---- Sidebar block (tournaments tab) ----
+  const sidebarEl = document.getElementById("upcoming-sidebar");
+  if (!list.length) {
+    sidebarEl.hidden = true;
+    stopSidebarRotator();
+  } else {
+    sidebarEl.hidden = currentView !== "results";
+    if (sidebarEl.hidden) {
+      // If hidden (we're not on results view) make sure the sidebar rotator is stopped.
+      stopSidebarRotator();
+    } else {
+      // Compact rotating sidebar: one item visible at a time
+      sidebarEl.innerHTML =
+        `<div class="upcoming-sidebar-block">` +
+        `<div class="upcoming-sidebar-head">🕜 ${esc(t("upcomingLabel"))}</div>` +
+        `<div class="upcoming-sidebar-viewport"><div class="up-sidebar-track">` +
+        list.map((it, i) =>
+          `<div class="up-s-item${i === 0 ? " active" : ""}">${upEntryHTML(it)}</div>`
+        ).join("") +
+        `</div></div></div>`;
+      sidebarRotatorIdx = 0;
+      startSidebarRotator(list.length);
+      sidebarEl.onmouseenter = () => stopSidebarRotator();
+      sidebarEl.onmouseleave = () => startSidebarRotator(list.length);
+    }
+  }
 }
 
 // Manual advance: go to next and restart the auto-timer so it doesn't
@@ -1061,6 +1144,15 @@ function switchView(view, { write = true } = {}) {
     b.classList.toggle("active", b.dataset.view === view));
   document.querySelectorAll(".panel").forEach(p => p.classList.remove("show"));
   document.getElementById("panel-" + view).classList.add("show");
+  // Toggle ticker placement: rotator on standings, sidebar block on results.
+  if (TOURNAMENTS.length) {
+    const hasUp = upcomingList().length > 0;
+    document.getElementById("upcoming-rotator").hidden  = !hasUp || view !== "standings";
+    document.getElementById("upcoming-sidebar").hidden  = !hasUp || view !== "results";
+  }
+  // Ensure timers are not running for hidden tickers.
+  if (view !== "standings" && rotatorTimer) { clearInterval(rotatorTimer); rotatorTimer = null; }
+  if (view !== "results") stopSidebarRotator();
   if (view === "results") syncSidebarHeight();
   if (write) writeHash();
 }
@@ -1073,11 +1165,10 @@ document.querySelectorAll(".vtab").forEach(btn => {
 let restoringHash = false;
 function writeHash() {
   if (restoringHash) return;
-  const parts = [LANG, currentView];
+  const parts = [currentView];
   if (currentView === "results" && selectedTab) parts.push(encodeURIComponent(selectedTab));
   const h = "#" + parts.join("/");
   if (location.hash !== h) {
-    // replaceState avoids cluttering history on every click.
     history.replaceState(null, "", h);
   }
 }
@@ -1086,9 +1177,8 @@ function parseHash() {
   if (!raw) return null;
   const seg = raw.split("/");
   const out = {};
-  if (seg[0] === "nl" || seg[0] === "en") out.lang = seg[0];
-  if (seg[1] === "standings" || seg[1] === "results") out.view = seg[1];
-  if (seg[2]) out.tab = decodeURIComponent(seg[2]);
+  if (seg[0] === "standings" || seg[0] === "results") out.view = seg[0];
+  if (seg[1]) out.tab = decodeURIComponent(seg[1]);
   return out;
 }
 
@@ -1147,8 +1237,7 @@ document.getElementById("lang-en").addEventListener("click", () => setLang("en")
 let requestedTab = null;
 (function restoreFromHash() {
   const h = parseHash();
-  if (h && h.lang) LANG = h.lang;          // hash language overrides detection
-  if (h && h.tab)  requestedTab = h.tab;   // honored once TOURNAMENTS load
+  if (h && h.tab) requestedTab = h.tab;    // honored once TOURNAMENTS load
   // View is applied after static text so the panels exist.
   restoringHash = true;
   applyStaticLang();
@@ -1163,7 +1252,6 @@ loadTournamentList();
 window.addEventListener("hashchange", () => {
   const h = parseHash();
   if (!h) return;
-  if (h.lang && h.lang !== LANG) setLang(h.lang);
   if (h.view && h.view !== currentView) switchView(h.view, { write: false });
   if (h.view === "results" && h.tab && h.tab !== selectedTab) {
     const match = TOURNAMENTS.find(it => it.tab === h.tab && it.st.clickable);
