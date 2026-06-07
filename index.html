@@ -798,6 +798,19 @@ function esc(s) {
     .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 }
 
+function sanitizeHref(url) {
+  const value = String(url || "").trim();
+  if (!value) return "#";
+  try {
+    const parsed = new URL(value, location.origin);
+    return parsed.protocol === "http:" || parsed.protocol === "https:"
+      ? parsed.href
+      : "#";
+  } catch {
+    return "#";
+  }
+}
+
 // Sort rows descending by a numeric column. Non-numbers sort to the bottom.
 function sortDesc(rows, col) {
   const num = (v) => {
@@ -1035,8 +1048,10 @@ async function loadTournamentList() {
       const st     = tournamentStatus(date, expiry, hasResults, today);
       const isFuture = !!(date && date > today);
       const nafLink = (idx.nafLinkCol && (r[idx.nafLinkCol] || "").trim()) ? r[idx.nafLinkCol].trim() : "";
-      const url = nafLink
-        || ((idx.urlCol && (r[idx.urlCol] || "").trim()) ? r[idx.urlCol].trim() : (idx.urlPlaceholder || ""));
+      const fallbackURL = (idx.urlCol && (r[idx.urlCol] || "").trim())
+        ? sanitizeHref(r[idx.urlCol].trim())
+        : (idx.urlPlaceholder || "");
+      const url = sanitizeHref(nafLink) || fallbackURL;
       return { tab, name, date, st, hasResults, isFuture, url };
     });
 
@@ -1172,7 +1187,7 @@ function upcomingList() {
     .sort((a, b) => (a.date?.getTime() || 0) - (b.date?.getTime() || 0));
 }
 function upEntryHTML(it) {
-  const url = it.url || "#";
+  const url = sanitizeHref(it.url || "#");
   return `<a class="up-entry" href="${esc(url)}" target="naf-info" rel="noopener">` +
          `<span class="up-name">${esc(it.name)}</span>` +
          (it.date ? `<span class="up-sep">·</span><span class="up-date">${fmtDate(it.date)}</span>` : ``) +
