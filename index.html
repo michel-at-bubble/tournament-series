@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dutch Blood Bowl Association — Resultaten</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Spectral:ital,wght@0,400;0,600;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  /* ============================================================
+     CONFIG IS IN THE SCRIPT BLOCK AT THE BOTTOM — edit there only.
+     ============================================================ */
+
+  :root {
+    --navy:       #010080;  /* shield navy */
+    --cobalt:     #0055D4;  /* shield bright blue */
+    --orange:     #F86808;  /* shield orange */
+    --red:        #E4002B;  /* shield red accent */
+    --white:      #ffffff;
+
+    /* Semantic names reused throughout the stylesheet */
+    --ink:        #0a0a4a;            /* deep navy text */
+    --parchment:  #eef1fb;            /* page background (cool off-white) */
+    --parchment2: #dde3f5;            /* subtle panel tint */
+    --blood:      var(--navy);        /* primary brand fill (was dark red) */
+    --blood-lite: var(--cobalt);      /* lighter primary */
+    --gold:       var(--orange);      /* accent */
+    --gold-lite:  #ffa04d;            /* lighter accent */
+    --steel:      #5a6275;            /* muted slate-blue for secondary text */
+    --green:      #2f5233;
+    --shadow:     rgba(1,0,80,.28);
+    --row-even:   rgba(255,255,255,.55);
+    --row-odd:    rgba(0,85,212,.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Spectral', Georgia, serif;
+    color: var(--ink);
+    background-color: var(--parchment);
+    background-image:
+      radial-gradient(circle at 12% 12%, rgba(0,85,212,.14), transparent 42%),
+      radial-gradient(circle at 90% 6%, rgba(248,104,8,.12), transparent 38%),
+      radial-gradient(circle at 50% 104%, rgba(1,0,128,.10), transparent 52%);
+    min-height: 100vh;
+    line-height: 1.5;
+  }
+
+  html, body { overflow-x: hidden; }
+
+  .wrap { max-width: 920px; margin: 0 auto; padding: 0 20px 80px; }
+
+  /* ---------- Header ---------- */
+  header {
+    position: relative;
+    padding: 54px 20px 38px;
+    text-align: center;
+    overflow: hidden;
+  }
+  .langtoggle {
+    position: absolute; top: 16px; right: 18px;
+    display: flex; gap: 4px; z-index: 5;
+  }
+  .flag-btn {
+    width: 34px; height: 23px; padding: 0; cursor: pointer;
+    border: 1.5px solid rgba(1,0,80,.3); border-radius: 4px;
+    overflow: hidden; background: transparent;
+    opacity: .5; transition: all .15s ease;
+    display: inline-flex;
+  }
+  .flag-btn svg { display: block; width: 100%; height: 100%; }
+  .flag-btn:hover { opacity: .85; }
+  .flag-btn.active {
+    opacity: 1; border-color: var(--gold);
+    box-shadow: 0 0 0 2px var(--gold-lite), 2px 2px 0 var(--shadow);
+  }
+  header::after {
+    content: "";
+    position: absolute; left: 50%; bottom: 18px;
+    width: 240px; height: 4px; transform: translateX(-50%); border-radius: 2px;
+    background: linear-gradient(90deg, var(--gold-lite), var(--orange) 50%, var(--gold-lite));
+    box-shadow: 0 1px 0 rgba(1,0,80,.15);
+  }
+  .crest-logo {
+    display: block; margin: 0 auto 14px;
+    width: clamp(82px, 14vw, 116px); height: auto;
+    filter: drop-shadow(0 6px 14px rgba(1,0,80,.35));
+    transition: transform .25s cubic-bezier(.34,1.56,.64,1);
+  }
+  .crest-logo:hover { transform: rotate(-3deg) scale(1.05); }
+  h1.series-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(34px, 6.5vw, 72px);
+    line-height: .95;
+    letter-spacing: .03em;
+    color: var(--navy);
+    text-shadow: 2px 2px 0 var(--white), 3px 3px 0 var(--cobalt), 5px 5px 0 var(--shadow);
+  }
+  .tagline {
+    font-style: italic;
+    font-size: clamp(15px, 2.4vw, 19px);
+    color: var(--steel);
+    margin-top: 10px;
+  }
+
+  /* ---------- Tabs / nav ---------- */
+  nav.viewtabs {
+    display: flex; gap: 8px; justify-content: center;
+    flex-wrap: wrap; margin: 8px 0 34px;
+  }
+  .vtab {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 19px; letter-spacing: .12em;
+    padding: 9px 24px; cursor: pointer;
+    background: rgba(255,255,255,.5); color: var(--navy);
+    border: 2px solid rgba(1,0,80,.18); border-radius: 999px;
+    transition: all .18s ease;
+  }
+  .vtab:hover { color: var(--cobalt); border-color: var(--cobalt); }
+  .vtab.active {
+    color: var(--white); background: var(--navy);
+    border-color: var(--navy);
+    box-shadow: 0 3px 0 var(--orange), 0 6px 12px -4px var(--shadow);
+  }
+
+  /* ---------- Panels ---------- */
+  .panel { display: none; animation: rise .4s ease both; }
+  .panel.show { display: block; }
+  @keyframes rise { from { opacity: 0; transform: translateY(12px);} to {opacity:1; transform:none;} }
+
+  .panel-head {
+    display: flex; align-items: baseline; justify-content: space-between;
+    flex-wrap: wrap; gap: 12px; margin-bottom: 16px;
+  }
+  .panel-head h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(28px, 5vw, 44px);
+    letter-spacing: .04em; color: var(--ink);
+  }
+
+  /* ---------- Results layout: sidebar + main ---------- */
+  .results-layout { display: flex; gap: 26px; align-items: flex-start; }
+  .sidebar-wrap { flex: 0 0 234px; width: 234px; }
+  .sidebar {
+    display: flex; flex-direction: column; gap: 6px;
+    overflow: hidden;
+    position: relative;
+    transition: max-height .3s ease;
+  }
+  /* Collapsed: clip to roughly the table height; a fade hints at more. */
+  .sidebar.collapsed { /* max-height set inline from JS to match table */ }
+  .sidebar.collapsed::after {
+    content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 46px;
+    background: linear-gradient(transparent, var(--parchment));
+    pointer-events: none;
+  }
+  .show-more {
+    width: 100%; margin-top: 6px;
+    font-family: 'Bebas Neue', sans-serif; letter-spacing: .1em; font-size: 14px;
+    padding: 7px; cursor: pointer;
+    background: transparent; color: var(--navy);
+    border: 1px solid rgba(1,0,80,.28); border-radius: 6px;
+    transition: all .15s ease;
+  }
+  .show-more:hover { background: rgba(0,85,212,.1); border-color: var(--cobalt); }
+  .show-future { margin-top: 0; margin-bottom: 6px; }
+  .show-future.on { background: rgba(0,85,212,.12); }
+  .results-main { flex: 1 1 auto; min-width: 0; }
+  .results-date {
+    font-style: italic; color: var(--steel); font-size: 15px; white-space: nowrap;
+  }
+  .standings-meta {
+    font-style: italic; color: var(--steel); font-size: 15px;
+    text-align: center; margin-bottom: 14px;
+  }
+  .standings-meta b { font-style: normal; color: var(--ink); }
+  .results-head {
+    flex-direction: column; align-items: center; text-align: center; gap: 2px;
+  }
+  .results-head h2 { text-align: center; }
+
+  .tourney-item {
+    text-align: left; cursor: pointer; width: 100%;
+    background: rgba(255,255,255,.55);
+    border: 1px solid rgba(1,0,80,.12);
+    border-left: 3px solid transparent;
+    border-radius: 6px; padding: 10px 12px;
+    transition: all .15s ease;
+    display: flex; flex-direction: column; gap: 3px;
+  }
+  .tourney-item:hover { background: rgba(0,85,212,.12); border-left-color: var(--orange); }
+  .tourney-item.disabled { cursor: default; }
+  .tourney-item.disabled .ti-text,
+  .tourney-item.disabled .ti-date { opacity: .45; }
+  .tourney-item.disabled .ti-flag { opacity: 1; filter: none; }
+  .tourney-item.disabled:hover {
+    background: rgba(255,255,255,.55); border-left-color: transparent;
+  }
+  .tourney-item.active {
+    background: var(--blood); border-left-color: var(--gold-lite);
+    box-shadow: 2px 2px 0 var(--shadow);
+  }
+  .tourney-item.active .ti-name,
+  .tourney-item.active .ti-date { color: var(--parchment); }
+  .ti-name {
+    font-weight: 600; font-size: 15px; color: var(--ink);
+    display: flex; align-items: center; gap: 6px; line-height: 1.25;
+  }
+  .ti-text { flex: 1 1 auto; }
+  .ti-date { font-size: 13px; color: var(--steel); font-style: italic; }
+  .ti-flag {
+    flex: 0 0 auto; font-size: 13px; cursor: help; margin-left: auto;
+    filter: saturate(.9);
+  }
+
+  /* Legend — fixed below the list, always visible */
+  .sidebar-legend {
+    margin-top: 10px; padding-top: 10px;
+    border-top: 1px solid rgba(1,0,80,.16);
+    font-size: 12px; color: var(--steel); line-height: 1.7;
+  }
+  .sidebar-legend span { display: block; }
+
+  /* Mobile tournament picker — hidden on desktop */
+  .mobile-picker { display: none; }
+  .sidebar-collapsible { display: block; }
+
+  @media (max-width: 680px) {
+    .results-layout { flex-direction: column; min-width: 0; }
+    .results-layout > * { min-width: 0; max-width: 100%; }
+    .sidebar-wrap { flex-basis: auto; width: 100%; margin-bottom: 8px; }
+    .sidebar.collapsed { max-height: none !important; }
+    .sidebar.collapsed::after { display: none; }
+    .show-more { display: none; }
+
+    /* Show the picker button; hide the list until opened */
+    .mobile-picker {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; cursor: pointer;
+      font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: .08em;
+      padding: 12px 16px; color: var(--white);
+      background: var(--navy); border: none; border-radius: 8px;
+      box-shadow: 0 3px 0 var(--orange), 0 6px 12px -4px var(--shadow);
+    }
+    .mp-caret { transition: transform .2s ease; }
+    .mobile-picker.open .mp-caret { transform: rotate(180deg); }
+    .sidebar-collapsible {
+      display: none;
+      margin-top: 10px;
+      animation: rise .25s ease both;
+    }
+    .sidebar-wrap.open .sidebar-collapsible { display: block; }
+
+    /* On mobile, hide NAF number (both pages) and Team (results) so the
+       tables fit without horizontal scrolling. */
+    .col-nafnr, .col-nafnumber, .col-team { display: none; }
+    .results-main table,
+    #standings-host table { min-width: 0; }
+    .results-head h2 { font-size: clamp(26px, 8vw, 40px); }
+  }
+
+  /* ---------- Table ---------- */
+  .tablecard {
+    background: linear-gradient(180deg, rgba(255,255,255,.70), rgba(255,255,255,.45));
+    border: 1px solid rgba(1,0,80,.14);
+    border-radius: 8px;
+    box-shadow: 0 14px 38px -16px var(--shadow);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  tr.medal td.pos, td.pos { white-space: nowrap; }
+  thead th {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 16px; letter-spacing: .14em; text-align: left;
+    padding: 14px 18px; color: var(--white);
+    background: linear-gradient(180deg, var(--navy), #00006a);
+    border-bottom: 3px solid var(--orange);
+  }
+  thead th.num { text-align: center; width: 64px; }
+  tbody td {
+    padding: 13px 18px; border-top: 1px solid rgba(1,0,80,.07);
+    font-size: 16px;
+  }
+  tbody tr:nth-child(even) { background: var(--row-even); }
+  tbody tr:nth-child(odd)  { background: var(--row-odd); }
+  tbody tr:hover { background: rgba(0,85,212,.14); }
+  td.pos {
+    font-family: 'JetBrains Mono', monospace; font-weight: 600;
+    text-align: center; color: var(--cobalt);
+  }
+  td.naf { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--steel); }
+  a.naf-link {
+    color: var(--cobalt); text-decoration: none;
+    border-bottom: 1px dotted var(--cobalt); transition: all .12s ease;
+  }
+  a.naf-link:hover { color: var(--orange); border-bottom-color: var(--orange); }
+  td.name { font-weight: 600; color: var(--navy); }
+  td.team { font-style: italic; color: var(--steel); }
+
+  /* Top-4 highlight (standings + results) */
+  tr.medal td.pos { color: var(--ink); font-weight: 700; position: relative; }
+  tr.rank1 td.pos::before { content:"🥇"; margin-right:4px; }
+  tr.rank2 td.pos::before { content:"🥈"; margin-right:4px; }
+  tr.rank3 td.pos::before { content:"🥉"; margin-right:4px; }
+  tr.rank4 td.pos::before { content:"🐤"; margin-right:4px; }
+  /* Row tints leaning to orange / red / white / blue, softened for the page */
+  tr.rank2 { background: linear-gradient(90deg, rgba(228,0,43,.16), transparent) !important; }
+  tr.rank3 { background: linear-gradient(90deg, rgba(255,255,255,.9), rgba(255,255,255,.2)) !important; }
+  tr.rank4 { background: linear-gradient(90deg, rgba(0,85,212,.18), transparent) !important; }
+
+  /* Champion row — stands out the most */
+  tr.rank1 {
+    background: linear-gradient(90deg, rgba(248,104,8,.42), rgba(255,160,77,.18) 55%, transparent) !important;
+    box-shadow: inset 4px 0 0 var(--orange), inset 0 0 22px rgba(248,104,8,.12);
+  }
+  tr.rank1 td { padding-top: 17px; padding-bottom: 17px; }
+  tr.rank1 td.pos {
+    font-size: 19px; color: var(--orange);
+  }
+  tr.rank1 td.pos::before { font-size: 20px; margin-right: 5px; }
+  tr.rank1 td.name {
+    font-size: 17px; font-weight: 800; letter-spacing: .01em;
+    color: var(--navy);
+  }
+  tr.rank1 td.name::after {
+    content: "★"; color: var(--orange); margin-left: 8px; font-size: 13px;
+    vertical-align: middle; opacity: .9;
+  }
+
+  /* ---------- States ---------- */
+  .state {
+    text-align: center; padding: 60px 20px; color: var(--steel);
+    font-style: italic; font-size: 17px;
+  }
+  .state.err {
+    color: var(--red); font-style: normal;
+    background: rgba(228,0,43,.07); border: 1px dashed var(--red);
+    border-radius: 6px;
+  }
+  .state .small { display:block; font-size: 13px; font-style: italic; margin-top: 10px; color: var(--steel); }
+  .spinner {
+    width: 34px; height: 34px; margin: 0 auto 18px;
+    border: 3px solid rgba(0,85,212,.25); border-top-color: var(--orange);
+    border-radius: 50%; animation: spin 1s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg);} }
+
+  footer {
+    text-align: center; margin-top: 50px; padding-top: 22px;
+    border-top: 1px solid rgba(1,0,80,.15);
+    font-size: 13px; color: var(--steel); font-style: italic;
+  }
+  footer a { color: var(--cobalt); }
+</style>
+</head>
+<body>
+  <header>
+    <div class="langtoggle">
+      <button class="flag-btn" id="lang-nl" title="Nederlands" aria-label="Nederlands"></button>
+      <button class="flag-btn" id="lang-en" title="English" aria-label="English"></button>
+    </div>
+    <img class="crest-logo" alt="Dutch Blood Bowl shield" src="data:image/png;base64,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">
+    <h1 class="series-title" id="t-title">Dutch Blood Bowl Tournament Series</h1>
+    <div class="tagline" id="t-tagline">Toernooiresultaten &amp; competitiestand</div>
+  </header>
+
+  <div class="wrap">
+    <nav class="viewtabs">
+      <button class="vtab active" data-view="standings" id="t-tab-standings">Competitiestand</button>
+      <button class="vtab" data-view="results" id="t-tab-results">Toernooien</button>
+    </nav>
+
+    <!-- STANDINGS -->
+    <section class="panel show" id="panel-standings">
+      <div class="standings-meta" id="standings-meta" hidden></div>
+      <div id="standings-host"></div>
+    </section>
+
+    <!-- RESULTS -->
+    <section class="panel" id="panel-results">
+      <div class="panel-head results-head">
+        <h2 id="results-title">Eindstand</h2>
+        <span class="results-date" id="results-date"></span>
+      </div>
+      <div class="results-layout">
+        <aside class="sidebar-wrap" id="sidebar-wrap">
+          <button class="mobile-picker" id="mobile-picker" aria-expanded="false">
+            <span id="mobile-picker-label">Kies toernooi</span><span class="mp-caret">▾</span>
+          </button>
+          <div class="sidebar-collapsible" id="sidebar-collapsible">
+            <button class="show-more show-future" id="show-future" hidden></button>
+            <div class="sidebar" id="tourney-list"></div>
+            <button class="show-more" id="show-more" hidden></button>
+            <div class="sidebar-legend" id="sidebar-legend"></div>
+          </div>
+        </aside>
+        <div class="results-main">
+          <div id="results-host"></div>
+        </div>
+      </div>
+    </section>
+
+    <footer id="t-footer">
+      Data live uit de officiële Google Sheet · ververst bij elke pagina-lading.
+    </footer>
+  </div>
+
+<script>
+/* ================================================================
+   CONFIGURATION — this is the ONLY block you edit.
+   ================================================================ */
+const CONFIG = {
+  // The Sheet's ID — the long string in its URL between /d/ and /edit
+  // e.g.  https://docs.google.com/spreadsheets/d/THIS_PART/edit
+  SHEET_ID: "1u41M--h1EuFvvHFCWXrCg1BzdazzDqyhHui0s5oAIZw",
+
+  // The exact tab name of your series-standings tab
+  STANDINGS_TAB: "Deelnemers",
+
+  // Column header in the standings tab to sort by, descending.
+  // Leave as "" to keep the Sheet's own row order.
+  STANDINGS_SORT_DESC: "Punten",
+
+  // The standings columns to show, in order. `key` looks up the column
+  // label per language (see TRANSLATIONS.cols); `col` is the exact header
+  // in the Sheet. (A position number is added automatically as first column.)
+  STANDINGS_COLUMNS: [
+    { key: "name",   col: "Naam" },
+    { key: "nafnr",  col: "NAF #" },
+    { key: "points", col: "Punten" },
+  ],
+
+  // The tournament list is read automatically from your "Toernooien" tab.
+  // gid = the tab's id (the #gid=... number in its URL). Using the gid means
+  // it keeps working even if you rename the tab.
+  TOURNAMENTS_INDEX: {
+    gid: "1354557961",       // the Toernooien tab
+    labelCol: "Tournooi",    // column with the display name
+    tabCol: "Code",          // column whose value is the results tab name
+    dateCol: "Datum",        // when the tournament is/was held (shown in sidebar)
+    expiryCol: "Vervaldatum",// counts toward standings until this date passes
+    countCol: "Aantal deelnemers", // filled once results are entered
+    dateFormat: "DMY",       // dates are dd-mm-yyyy in the sheet
+  },
+
+  // Results columns visitors see, mapped to your Sheet headers.
+  // A column that is entirely empty for a given tournament is dropped
+  // automatically (see DROP_IF_EMPTY).
+  RESULT_COLUMNS: [
+    { key: "pos",        col: "Resultaat" },
+    { key: "participant",col: "Deelnemer" },
+    { key: "nafnumber",  col: "NAF nummer" },
+    { key: "team",       col: "Team" },
+    { key: "points",     col: "Punten" },
+  ],
+
+  // Columns from RESULT_COLUMNS that should disappear when empty for a
+  // tournament (e.g. some tournaments have no team data).
+  DROP_IF_EMPTY: ["Team"],
+};
+/* ================================================================
+   END OF CONFIG — nothing below needs editing.
+   ================================================================ */
+
+// ---- Translations. Edit the English strings here to taste. ----
+const TRANSLATIONS = {
+  nl: {
+    title:    "Dutch Blood Bowl Tournament Series",
+    tagline:  "Toernooiresultaten &amp; competitiestand",
+    tabStandings: "Competitiestand",
+    tabResults:   "Toernooien",
+    standingsTitle: "Competitiestand",
+    standingsAfter: "Stand na",
+    footer:   "Data live uit de officiële Google Sheet · ververst bij elke pagina-lading.",
+    showMore: "Toon meer ▾",
+    showLess: "Toon minder ▴",
+    showFuture:  "Toon toekomstige toernooien ▾",
+    pickTournament: "Kies toernooi",
+    hideFuture:  "Verberg toekomstige toernooien ▴",
+    loadingStandings: "Stand wordt geladen…",
+    loadingResults:   "Eindstand wordt geladen…",
+    noResults: "Nog geen resultaten beschikbaar.",
+    errResults: "De resultaten konden niet worden geladen.",
+    errResultsHint: 'Controleer of de Sheet gedeeld is ("iedereen met de link → bekijken") en of de tab bestaat met de juiste kolomkoppen.',
+    errList: "De toernooienlijst kon niet worden geladen.",
+    errListHint: "Controleer of het Toernooien-tabblad bestaat en publiek leesbaar is.",
+    flagUpcoming: "Aankomend toernooi",
+    flagPending:  "Gespeeld — resultaten nog niet binnen",
+    flagActive:   "Telt mee voor de huidige competitiestand",
+    flagHistoric: "Historisch — telt niet meer mee",
+    legendActive:   "Telt mee voor de huidige stand",
+    legendPending:  "Gespeeld — resultaten volgen",
+    legendUpcoming: "Aankomend toernooi",
+    legendHistoric: "Historisch — telt niet meer mee",
+    months: ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"],
+    cols: { pos:"#", name:"Coach", nafnr:"NAF #", points:"Punten",
+            participant:"Coach", nafnumber:"NAF #", team:"Team" },
+  },
+  en: {
+    title:    "Dutch Blood Bowl Tournament Series",
+    tagline:  "Tournament results &amp; league standings",
+    tabStandings: "Standings",
+    tabResults:   "Tournaments",
+    standingsTitle: "League standings",
+    standingsAfter: "Standings after",
+    footer:   "Live data from the official Google Sheet · refreshed on every page load.",
+    showMore: "Show more ▾",
+    showLess: "Show less ▴",
+    showFuture:  "Show upcoming tournaments ▾",
+    pickTournament: "Pick tournament",
+    hideFuture:  "Hide upcoming tournaments ▴",
+    loadingStandings: "Loading standings…",
+    loadingResults:   "Loading results…",
+    noResults: "No results available yet.",
+    errResults: "The results could not be loaded.",
+    errResultsHint: 'Check that the Sheet is shared ("anyone with the link → viewer") and that the tab exists with the right column headers.',
+    errList: "The tournament list could not be loaded.",
+    errListHint: "Check that the Tournaments tab exists and is publicly readable.",
+    flagUpcoming: "Upcoming tournament",
+    flagPending:  "Played — results not in yet",
+    flagActive:   "Counts toward the current league standings",
+    flagHistoric: "Historic — no longer counts",
+    legendActive:   "Counts toward the current standings",
+    legendPending:  "Played — results to follow",
+    legendUpcoming: "Upcoming tournament",
+    legendHistoric: "Historic — no longer counts",
+    months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+    cols: { pos:"#", name:"Coach", nafnr:"NAF #", points:"Points",
+            participant:"Coach", nafnumber:"NAF #", team:"Team" },
+  },
+};
+
+// Current language: detect from the browser, default to English unless Dutch.
+let LANG = (navigator.language || "en").toLowerCase().startsWith("nl") ? "nl" : "en";
+const t = (k) => TRANSLATIONS[LANG][k];
+const tcol = (key) => TRANSLATIONS[LANG].cols[key] ?? key;
+
+// Accepts either a tab name (string) or {gid:"..."} to target a tab.
+const gvizURL = (target) => {
+  const base = `https://docs.google.com/spreadsheets/d/${CONFIG.SHEET_ID}/gviz/tq?tqx=out:csv&headers=1`;
+  if (target && typeof target === "object" && target.gid)
+    return `${base}&gid=${encodeURIComponent(target.gid)}`;
+  return `${base}&sheet=${encodeURIComponent(target)}`;
+};
+
+// Minimal, correct CSV parser (handles quoted fields, commas, newlines).
+function parseCSV(text) {
+  const rows = []; let row = [], field = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i+1] === '"') { field += '"'; i++; } else q = false; }
+      else field += c;
+    } else {
+      if (c === '"') q = true;
+      else if (c === ',') { row.push(field); field = ""; }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ""; }
+      else if (c === '\r') { /* skip */ }
+      else field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows;
+}
+
+// Fetch a tab and return {headers:[], rows:[{}]}
+async function fetchTab(target) {
+  const res = await fetch(gvizURL(target));
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const txt = await res.text();
+  if (txt.trim().startsWith("<")) throw new Error("not-public"); // got an HTML error page
+  const grid = parseCSV(txt).filter(r => r.some(c => c.trim() !== ""));
+  if (!grid.length) return { headers: [], rows: [] };
+  const headers = grid[0].map(h => h.trim());
+  const rows = grid.slice(1).map(r => {
+    const o = {}; headers.forEach((h, i) => o[h] = (r[i] ?? "").trim()); return o;
+  });
+  return { headers, rows };
+}
+
+function medalClass(i) {
+  return i === 0 ? "medal rank1" : i === 1 ? "medal rank2"
+       : i === 2 ? "medal rank3" : i === 3 ? "medal rank4" : "";
+}
+
+// Escape untrusted text (Sheet values) before putting it in innerHTML.
+function esc(s) {
+  return String(s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+}
+
+// Sort rows descending by a numeric column. Non-numbers sort to the bottom.
+function sortDesc(rows, col) {
+  const num = (v) => {
+    const n = parseFloat(String(v).replace(",", "."));
+    return Number.isFinite(n) ? n : -Infinity;
+  };
+  return [...rows].sort((a, b) => num(b[col]) - num(a[col]));
+}
+
+function renderTable(host, cols, rows, opts = {}) {
+  if (!rows.length) {
+    host.innerHTML = `<div class="state">${t("noResults")}</div>`;
+    return;
+  }
+  // When autoPos is set, prepend a generated rank column ("#").
+  const allCols = opts.autoPos ? [{ key: "pos", _auto: true }, ...cols] : cols;
+  const thead = allCols.map((c, i) =>
+    `<th class="col-${c.key} ${i === 0 ? "num" : ""}">${tcol(c.key)}</th>`).join("");
+  const body = rows.map((r, ri) => {
+    const cls = opts.medals ? medalClass(ri) : "";
+    const tds = allCols.map((c, ci) => {
+      let v, klass = "";
+      if (c._auto) { v = String(ri + 1); klass = "pos"; }
+      else {
+        v = r[c.col] ?? "";
+        if (ci === 0) klass = "pos";
+        else if (/naf/i.test(c.col)) klass = "naf";
+        else if (/team/i.test(c.col)) klass = "team";
+        else if (/deelnemer|coach|naam/i.test(c.col)) klass = "name";
+      }
+      // Turn a NAF number into a link to the coach's NAF page. Opens in a
+      // named window so repeated clicks reuse the same tab.
+      let cell = esc(v) || "—";
+      if (klass === "naf" && /^\d+$/.test(v.trim())) {
+        const n = v.trim(); // digits only, validated by the regex above
+        const url = `https://member.thenaf.net/index.php?module=NAF&type=coachpage&coach=${n}`;
+        cell = `<a class="naf-link" href="${url}" target="naf" rel="noopener">${n}</a>`;
+      }
+      return `<td class="col-${c.key} ${klass}">${cell}</td>`;
+    }).join("");
+    return `<tr class="${cls}">${tds}</tr>`;
+  }).join("");
+  host.innerHTML =
+    `<div class="tablecard"><table><thead><tr>${thead}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function loading(host, msg) {
+  host.innerHTML = `<div class="state"><div class="spinner"></div>${msg}</div>`;
+}
+function errorState(host, tab) {
+  host.innerHTML =
+    `<div class="state err">${t("errResults")}
+      <span class="small">${t("errResultsHint")} ("<b>${esc(tab)}</b>")</span></div>`;
+}
+
+async function loadStandings() {
+  const host = document.getElementById("standings-host");
+  loading(host, t("loadingStandings"));
+  try {
+    let { rows } = await fetchTab(CONFIG.STANDINGS_TAB);
+    // Only show participants with 1 or more points.
+    const pts = CONFIG.STANDINGS_SORT_DESC || "Punten";
+    rows = rows.filter(r => {
+      const n = parseFloat(String(r[pts] ?? "").replace(",", "."));
+      return Number.isFinite(n) && n >= 1;
+    });
+    if (CONFIG.STANDINGS_SORT_DESC) rows = sortDesc(rows, CONFIG.STANDINGS_SORT_DESC);
+    renderTable(host, CONFIG.STANDINGS_COLUMNS, rows, { medals: true, autoPos: true });
+  } catch (e) {
+    errorState(host, CONFIG.STANDINGS_TAB);
+  }
+}
+
+let currentResultsTab = null;
+async function loadResults(tab, meta) {
+  currentResultsTab = tab;
+  const host = document.getElementById("results-host");
+  loading(host, t("loadingResults"));
+  try {
+    let { rows } = await fetchTab(tab);
+    // Sort by placing (Resultaat) ascending: 1, 2, 3, ...
+    const posCol = CONFIG.RESULT_COLUMNS[0].col;
+    rows.sort((a, b) => {
+      const na = parseFloat(String(a[posCol] ?? "").replace(",", "."));
+      const nb = parseFloat(String(b[posCol] ?? "").replace(",", "."));
+      return (Number.isFinite(na) ? na : Infinity) - (Number.isFinite(nb) ? nb : Infinity);
+    });
+    // Drop configured columns that are entirely empty for this tournament.
+    const drop = new Set(CONFIG.DROP_IF_EMPTY || []);
+    const cols = CONFIG.RESULT_COLUMNS.filter(c => {
+      if (!drop.has(c.col)) return true;
+      return rows.some(r => (r[c.col] || "").trim() !== "");
+    });
+    renderTable(host, cols, rows, { medals: true });
+    syncSidebarHeight();
+  } catch (e) {
+    errorState(host, tab);
+    syncSidebarHeight();
+  }
+}
+
+// Match the collapsed sidebar height to the results table; show "toon meer"
+// only when the list is genuinely taller than the table beside it.
+let sidebarExpanded = false;
+function syncSidebarHeight() {
+  const sidebar = document.getElementById("tourney-list");
+  const main = document.querySelector(".results-main");
+  const btn = document.getElementById("show-more");
+  if (!sidebar || !main || !btn) return;
+  // Two frames so the results table has actually laid out before measuring.
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    const tableH = main.offsetHeight;
+    // Measure natural list height without the collapse cap.
+    const prev = sidebar.style.maxHeight;
+    sidebar.style.maxHeight = "";
+    const listH = sidebar.scrollHeight;
+    sidebar.style.maxHeight = prev;
+
+    const overflows = listH > tableH + 12;
+    if (sidebarExpanded || !overflows) {
+      sidebar.classList.remove("collapsed");
+      sidebar.style.maxHeight = "";
+      btn.hidden = !overflows;            // only show toggle if it can collapse
+      btn.textContent = sidebarExpanded ? t("showLess") : t("showMore");
+    } else {
+      sidebar.classList.add("collapsed");
+      sidebar.style.maxHeight = Math.max(tableH, 160) + "px";
+      btn.hidden = false;
+      btn.textContent = t("showMore");
+    }
+  }));
+}
+
+document.getElementById("show-more").addEventListener("click", () => {
+  sidebarExpanded = !sidebarExpanded;
+  syncSidebarHeight();
+});
+window.addEventListener("resize", syncSidebarHeight);
+
+// Parse dd-mm-yyyy (or yyyy-mm-dd) into a Date.
+function parseDate(s, fmt) {
+  const m = String(s).trim().match(/(\d{1,4})[-\/](\d{1,2})[-\/](\d{1,4})/);
+  if (!m) return null;
+  let d, mo, y;
+  if (fmt === "DMY") { d = +m[1]; mo = +m[2]; y = +m[3]; }
+  else { y = +m[1]; mo = +m[2]; d = +m[3]; }
+  const dt = new Date(y, mo - 1, d);
+  return isNaN(dt) ? null : dt;
+}
+
+function fmtDate(dt) {
+  if (!dt) return "";
+  return `${dt.getDate()} ${TRANSLATIONS[LANG].months[dt.getMonth()]} ${dt.getFullYear()}`;
+}
+
+// Returns {kind, flag, clickable} for a tournament. Hint text is looked up
+// by kind at render time so it follows the active language.
+function tournamentStatus(date, expiry, hasResults, today) {
+  if (date && date > today)
+    return { kind: "Upcoming", flag: "🕜", clickable: false };
+  if (!hasResults)
+    return { kind: "Pending",  flag: "⏳", clickable: false };
+  if (expiry && expiry >= today)
+    return { kind: "Active",   flag: "🏆", clickable: true };
+  return { kind: "Historic",   flag: "📜", clickable: true };
+}
+
+// Picks the tournament to show first: walking from the top (newest), the
+// first one that is not in the future and already has results entered.
+// Falls back to the first tournament that has results at all.
+function chooseInitial(items, today) {
+  for (const it of items) {
+    const future = it.date && it.date > today;
+    if (!future && it.hasResults) return it;
+  }
+  return items.find(it => it.hasResults) || items[0];
+}
+
+let TOURNAMENTS = [];     // parsed tournament data (fetched once)
+let showFuture = false;   // whether upcoming tournaments are shown
+let selectedTab = null;   // currently selected tournament tab
+
+async function loadTournamentList() {
+  const idx = CONFIG.TOURNAMENTS_INDEX;
+  try {
+    const { rows } = await fetchTab({ gid: idx.gid });
+    const list = rows.filter(r => (r[idx.tabCol] || "").trim() !== "");
+    if (!list.length) throw new Error("empty");
+
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    TOURNAMENTS = list.map(r => {
+      const tab    = r[idx.tabCol].trim();
+      const name   = (r[idx.labelCol] || tab).trim();
+      const date   = idx.dateCol   ? parseDate(r[idx.dateCol],   idx.dateFormat) : null;
+      const expiry = idx.expiryCol ? parseDate(r[idx.expiryCol], idx.dateFormat) : null;
+      const hasResults = idx.countCol ? (r[idx.countCol] || "").trim() !== "" : true;
+      const st     = tournamentStatus(date, expiry, hasResults, today);
+      const isFuture = !!(date && date > today);
+      return { tab, name, date, st, hasResults, isFuture };
+    });
+
+    // Prefer a tournament requested via the URL hash, if valid and clickable.
+    let initial = null;
+    if (requestedTab) {
+      const match = TOURNAMENTS.find(it => it.tab === requestedTab && it.st.clickable);
+      if (match) {
+        initial = match;
+        // If it's a hidden future tournament (shouldn't be clickable, but
+        // guard anyway), reveal future so it appears in the list.
+        if (match.isFuture) showFuture = true;
+      }
+    }
+    if (!initial) initial = chooseInitial(TOURNAMENTS, today) || TOURNAMENTS[0];
+    selectedTab = initial.tab;
+    renderTournamentList();
+    renderStandingsMeta();
+    loadResults(initial.tab);
+    requestedTab = null;
+  } catch (e) {
+    document.getElementById("results-host").innerHTML =
+      `<div class="state err">${t("errList")}
+        <span class="small">${t("errListHint")} (gid ${CONFIG.TOURNAMENTS_INDEX.gid})</span></div>`;
+  }
+}
+
+// Renders the sidebar from TOURNAMENTS; safe to call again on language
+// change or when toggling the future-tournaments visibility.
+function renderTournamentList() {
+  const listHost = document.getElementById("tourney-list");
+  const futureBtn = document.getElementById("show-future");
+  if (!TOURNAMENTS.length) return;
+  listHost.innerHTML = "";
+
+  const visible = TOURNAMENTS.filter(it => showFuture || !it.isFuture);
+
+  visible.forEach(it => {
+    const btn = document.createElement("button");
+    btn.className = "tourney-item"
+      + (it.tab === selectedTab ? " active" : "")
+      + (it.st.clickable ? "" : " disabled");
+    btn.innerHTML =
+      `<span class="ti-name"><span class="ti-text">${esc(it.name)}</span>` +
+      `<span class="ti-flag" title="${t("flag" + it.st.kind)}">${it.st.flag}</span>` +
+      `</span>` +
+      (it.date ? `<span class="ti-date">${fmtDate(it.date)}</span>` : ``);
+    if (it.st.clickable) {
+      btn.addEventListener("click", () => {
+        selectedTab = it.tab;
+        document.querySelectorAll(".tourney-item").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById("results-title").textContent = it.name;
+        document.getElementById("results-date").textContent = it.date ? fmtDate(it.date) : "";
+        loadResults(it.tab);
+        writeHash();
+        updateMobilePicker();
+        closeMobilePicker();
+      });
+    } else {
+      btn.disabled = true;
+    }
+    listHost.appendChild(btn);
+  });
+
+  // Legend — fixed, outside the collapsible list, always all four categories.
+  const legend = [
+    { flag: "🏆", key: "legendActive"   },
+    { flag: "⏳", key: "legendPending"  },
+    { flag: "🕜", key: "legendUpcoming" },
+    { flag: "📜", key: "legendHistoric" },
+  ];
+  document.getElementById("sidebar-legend").innerHTML =
+    legend.map(l => `<span>${l.flag} ${t(l.key)}</span>`).join("");
+
+  // Future toggle: only relevant if any future tournaments exist.
+  const anyFuture = TOURNAMENTS.some(it => it.isFuture);
+  futureBtn.hidden = !anyFuture;
+  futureBtn.textContent = showFuture ? t("hideFuture") : t("showFuture");
+  futureBtn.classList.toggle("on", showFuture);
+
+  // Update the selected title/date in case it changed language.
+  const sel = TOURNAMENTS.find(it => it.tab === selectedTab);
+  if (sel) {
+    document.getElementById("results-title").textContent = sel.name;
+    document.getElementById("results-date").textContent = sel.date ? fmtDate(sel.date) : "";
+  }
+  syncSidebarHeight();
+  updateMobilePicker();
+}
+
+document.getElementById("show-future").addEventListener("click", () => {
+  showFuture = !showFuture;
+  renderTournamentList();
+});
+
+// ---- Mobile tournament picker ----
+function updateMobilePicker() {
+  const label = document.getElementById("mobile-picker-label");
+  if (!label) return;
+  const sel = TOURNAMENTS.find(it => it.tab === selectedTab);
+  label.textContent = sel ? sel.name : t("pickTournament");
+}
+function closeMobilePicker() {
+  const wrap = document.getElementById("sidebar-wrap");
+  const btn = document.getElementById("mobile-picker");
+  wrap.classList.remove("open");
+  btn.classList.remove("open");
+  btn.setAttribute("aria-expanded", "false");
+}
+document.getElementById("mobile-picker").addEventListener("click", () => {
+  const wrap = document.getElementById("sidebar-wrap");
+  const btn = document.getElementById("mobile-picker");
+  const open = wrap.classList.toggle("open");
+  btn.classList.toggle("open", open);
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+});
+
+// "Stand na <toernooi> (datum)" — the newest tournament that has results,
+// regardless of whether it still counts. Hidden until data is available.
+function renderStandingsMeta() {
+  const el = document.getElementById("standings-meta");
+  if (!el) return;
+  const latest = TOURNAMENTS.find(it => it.hasResults);
+  if (!latest) { el.hidden = true; return; }
+  const datePart = latest.date ? ` (${fmtDate(latest.date)})` : "";
+  el.innerHTML = `${t("standingsAfter")} <b>${esc(latest.name)}</b>${datePart}`;
+  el.hidden = false;
+}
+
+// ---- View switching ----
+let currentView = "standings";
+function switchView(view, { write = true } = {}) {
+  currentView = view;
+  document.querySelectorAll(".vtab").forEach(b =>
+    b.classList.toggle("active", b.dataset.view === view));
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("show"));
+  document.getElementById("panel-" + view).classList.add("show");
+  if (view === "results") syncSidebarHeight();
+  if (write) writeHash();
+}
+document.querySelectorAll(".vtab").forEach(btn => {
+  btn.addEventListener("click", () => switchView(btn.dataset.view));
+});
+
+// ---- State in the URL hash: #<lang>/<view>[/<tab>] ----
+// Robust inside an iframe embed and gives shareable links.
+let restoringHash = false;
+function writeHash() {
+  if (restoringHash) return;
+  const parts = [LANG, currentView];
+  if (currentView === "results" && selectedTab) parts.push(encodeURIComponent(selectedTab));
+  const h = "#" + parts.join("/");
+  if (location.hash !== h) {
+    // replaceState avoids cluttering history on every click.
+    history.replaceState(null, "", h);
+  }
+}
+function parseHash() {
+  const raw = (location.hash || "").replace(/^#/, "");
+  if (!raw) return null;
+  const seg = raw.split("/");
+  const out = {};
+  if (seg[0] === "nl" || seg[0] === "en") out.lang = seg[0];
+  if (seg[1] === "standings" || seg[1] === "results") out.view = seg[1];
+  if (seg[2]) out.tab = decodeURIComponent(seg[2]);
+  return out;
+}
+
+// ---- Language application ----
+// Updates only static chrome (header, tabs, footer, flag state).
+function applyStaticLang() {
+  document.documentElement.lang = LANG;
+  document.getElementById("t-title").textContent     = t("title");
+  document.getElementById("t-tagline").innerHTML     = t("tagline");
+  document.getElementById("t-tab-standings").textContent = t("tabStandings");
+  document.getElementById("t-tab-results").textContent   = t("tabResults");
+  document.getElementById("t-footer").innerHTML      = t("footer");
+  document.getElementById("lang-nl").classList.toggle("active", LANG === "nl");
+  document.getElementById("lang-en").classList.toggle("active", LANG === "en");
+}
+
+// Inline SVG flags so they render identically on every OS (incl. Windows).
+const FLAG_NL =
+  `<svg viewBox="0 0 9 6" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+     <rect width="9" height="6" fill="#21468B"/>
+     <rect width="9" height="4" fill="#FFF"/>
+     <rect width="9" height="2" fill="#AE1C28"/>
+   </svg>`;
+const FLAG_GB =
+  `<svg viewBox="0 0 60 30" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+     <clipPath id="ukclip"><rect width="60" height="30"/></clipPath>
+     <g clip-path="url(#ukclip)">
+       <rect width="60" height="30" fill="#012169"/>
+       <path d="M0,0 60,30 M60,0 0,30" stroke="#FFF" stroke-width="6"/>
+       <path d="M0,0 60,30 M60,0 0,30" stroke="#C8102E" stroke-width="4"/>
+       <path d="M30,0 V30 M0,15 H60" stroke="#FFF" stroke-width="10"/>
+       <path d="M30,0 V30 M0,15 H60" stroke="#C8102E" stroke-width="6"/>
+     </g>
+   </svg>`;
+document.getElementById("lang-nl").innerHTML = FLAG_NL;
+document.getElementById("lang-en").innerHTML = FLAG_GB;
+
+function setLang(lang) {
+  if (lang === LANG) return;
+  LANG = lang;
+  applyStaticLang();
+  // Re-render dynamic content in the new language.
+  loadStandings();
+  if (TOURNAMENTS.length) {
+    renderTournamentList();
+    renderStandingsMeta();
+    if (currentResultsTab) loadResults(currentResultsTab);
+  }
+  writeHash();
+}
+document.getElementById("lang-nl").addEventListener("click", () => setLang("nl"));
+document.getElementById("lang-en").addEventListener("click", () => setLang("en"));
+
+// ---- Initial load ----
+let requestedTab = null;
+(function restoreFromHash() {
+  const h = parseHash();
+  if (h && h.lang) LANG = h.lang;          // hash language overrides detection
+  if (h && h.tab)  requestedTab = h.tab;   // honored once TOURNAMENTS load
+  // View is applied after static text so the panels exist.
+  restoringHash = true;
+  applyStaticLang();
+  switchView(h && h.view ? h.view : "standings", { write: false });
+  restoringHash = false;
+})();
+
+loadStandings();
+loadTournamentList();
+
+// React to manual hash edits / back-forward navigation.
+window.addEventListener("hashchange", () => {
+  const h = parseHash();
+  if (!h) return;
+  if (h.lang && h.lang !== LANG) setLang(h.lang);
+  if (h.view && h.view !== currentView) switchView(h.view, { write: false });
+  if (h.view === "results" && h.tab && h.tab !== selectedTab) {
+    const match = TOURNAMENTS.find(it => it.tab === h.tab && it.st.clickable);
+    if (match) {
+      selectedTab = match.tab;
+      renderTournamentList();
+      loadResults(match.tab);
+    }
+  }
+});
+
+// Keep the sidebar height in step with the results table. A ResizeObserver
+// fires whenever the table's height settles — after async data loads, after
+// webfonts swap in, on window resize — which makes the first-load "Toon meer"
+// reliable instead of depending on a single well-timed measurement.
+(function observeResultsHeight() {
+  const main = document.querySelector(".results-main");
+  if (!main || typeof ResizeObserver === "undefined") {
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(syncSidebarHeight);
+    window.addEventListener("load", syncSidebarHeight);
+    return;
+  }
+  let last = 0;
+  const ro = new ResizeObserver(() => {
+    const h = main.offsetHeight;
+    if (Math.abs(h - last) > 2) { last = h; syncSidebarHeight(); }
+  });
+  ro.observe(main);
+})();
+
+
+</script>
+</body>
+</html>
