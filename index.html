@@ -127,6 +127,59 @@
     box-shadow: 0 3px 0 var(--orange), 0 6px 12px -4px var(--shadow);
   }
 
+  /* ---------- Upcoming tournament banner (rotator) ---------- */
+  .upcoming-rotator {
+    display: flex; align-items: stretch; gap: 0;
+    max-width: 760px; margin: 0 auto 22px;
+    background: rgba(255,255,255,.5);
+    border: 1px solid rgba(1,0,80,.14); border-radius: 999px;
+    overflow: hidden;
+    box-shadow: 0 4px 14px -8px var(--shadow);
+  }
+  .up-label {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 6px;
+    font-family: 'Bebas Neue', sans-serif; letter-spacing: .12em; font-size: 14px;
+    padding: 9px 16px; color: var(--white);
+    background: var(--navy); white-space: nowrap;
+  }
+  .up-label::before { content: "🏆"; font-size: 13px; }
+
+  .up-rotate-viewport { flex: 1 1 auto; position: relative; overflow: hidden; }
+  .up-rotate-track { position: relative; height: 100%; min-height: 40px; }
+  .up-item {
+    position: absolute; inset: 0;
+    display: flex; align-items: center;
+    padding: 0 6px; white-space: nowrap;
+    opacity: 0; transition: opacity .6s ease; pointer-events: none;
+  }
+  .up-item.active { opacity: 1; pointer-events: auto; }
+
+  .up-next {
+    flex: 0 0 auto; cursor: pointer;
+    width: 42px; border: none; background: transparent;
+    color: var(--cobalt); font-size: 26px; line-height: 1;
+    transition: all .15s ease;
+    border-left: 1px solid rgba(1,0,80,.1);
+  }
+  .up-next:hover { color: var(--orange); background: rgba(0,85,212,.08); }
+
+  /* Shared item appearance */
+  .up-entry {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 18px; text-decoration: none; color: var(--navy);
+    font-size: 15px; transition: color .15s ease;
+  }
+  .up-entry:hover { color: var(--orange); }
+  .up-entry .up-name { font-weight: 700; }
+  .up-entry .up-date { font-style: italic; color: var(--steel); font-size: 14px; }
+  .up-entry .up-sep { color: var(--cobalt); opacity: .5; }
+
+  @media (max-width: 680px) {
+    .up-label { padding: 8px 12px; font-size: 13px; }
+    .up-entry { font-size: 14px; padding: 8px 14px; }
+    .up-next { width: 38px; font-size: 22px; }
+  }
+
   /* ---------- Panels ---------- */
   .panel { display: none; animation: rise .4s ease both; }
   .panel.show { display: block; }
@@ -308,6 +361,13 @@
   tr.rank2 td.pos::before { content:"🥈"; margin-right:4px; }
   tr.rank3 td.pos::before { content:"🥉"; margin-right:4px; }
   tr.rank4 td.pos::before { content:"🐤"; margin-right:4px; }
+  /* Wooden spoon — last place */
+  tr.spoon td.pos { position: relative; font-weight: 700; }
+  tr.spoon td.pos::before {
+    content:"🥄"; margin-right:4px; display: inline-block;
+    filter: sepia(1) saturate(1.6) hue-rotate(-12deg) brightness(.9);
+  }
+  tr.spoon { background: linear-gradient(90deg, rgba(120,90,50,.12), transparent) !important; }
   /* Row tints leaning to orange / red / white / blue, softened for the page */
   tr.rank2 { background: linear-gradient(90deg, rgba(228,0,43,.16), transparent) !important; }
   tr.rank3 { background: linear-gradient(90deg, rgba(255,255,255,.9), rgba(255,255,255,.2)) !important; }
@@ -326,10 +386,6 @@
   tr.rank1 td.name {
     font-size: 17px; font-weight: 800; letter-spacing: .01em;
     color: var(--navy);
-  }
-  tr.rank1 td.name::after {
-    content: "★"; color: var(--orange); margin-left: 8px; font-size: 13px;
-    vertical-align: middle; opacity: .9;
   }
 
   /* ---------- States ---------- */
@@ -374,6 +430,13 @@
       <button class="vtab active" data-view="standings" id="t-tab-standings">Competitiestand</button>
       <button class="vtab" data-view="results" id="t-tab-results">Toernooien</button>
     </nav>
+
+    <!-- Upcoming tournaments — rotator (one at a time, soft fade) -->
+    <div class="upcoming-rotator" id="upcoming-rotator" hidden>
+      <span class="up-label" id="up-label-1">Aankomend</span>
+      <div class="up-rotate-viewport"><div class="up-rotate-track" id="up-rotate-track"></div></div>
+      <button class="up-next" id="up-next" aria-label="Volgende">›</button>
+    </div>
 
     <!-- STANDINGS -->
     <section class="panel show" id="panel-standings">
@@ -445,6 +508,8 @@ const CONFIG = {
     dateCol: "Datum",        // when the tournament is/was held (shown in sidebar)
     expiryCol: "Vervaldatum",// counts toward standings until this date passes
     countCol: "Aantal deelnemers", // filled once results are entered
+    urlCol: "URL",           // optional: link to a tournament info page
+    urlPlaceholder: "https://member.thenaf.net/index.php?module=NAF&type=tournaments&nation=Netherlands",
     dateFormat: "DMY",       // dates are dd-mm-yyyy in the sheet
   },
 
@@ -481,6 +546,7 @@ const TRANSLATIONS = {
     showLess: "Toon minder ▴",
     showFuture:  "Toon toekomstige toernooien ▾",
     pickTournament: "Kies toernooi",
+    upcomingLabel: "Aankomend",
     hideFuture:  "Verberg toekomstige toernooien ▴",
     loadingStandings: "Stand wordt geladen…",
     loadingResults:   "Eindstand wordt geladen…",
@@ -513,6 +579,7 @@ const TRANSLATIONS = {
     showLess: "Show less ▴",
     showFuture:  "Show upcoming tournaments ▾",
     pickTournament: "Pick tournament",
+    upcomingLabel: "Upcoming",
     hideFuture:  "Hide upcoming tournaments ▴",
     loadingStandings: "Loading standings…",
     loadingResults:   "Loading results…",
@@ -614,7 +681,10 @@ function renderTable(host, cols, rows, opts = {}) {
   const thead = allCols.map((c, i) =>
     `<th class="col-${c.key} ${i === 0 ? "num" : ""}">${tcol(c.key)}</th>`).join("");
   const body = rows.map((r, ri) => {
-    const cls = opts.medals ? medalClass(ri) : "";
+    let cls = opts.medals ? medalClass(ri) : "";
+    // Wooden spoon on the very last row, but not if that row already
+    // carries a top-4 medal (i.e. very short lists).
+    if (opts.medals && ri === rows.length - 1 && !cls) cls = "spoon";
     const tds = allCols.map((c, ci) => {
       let v, klass = "";
       if (c._auto) { v = String(ri + 1); klass = "pos"; }
@@ -793,7 +863,9 @@ async function loadTournamentList() {
       const hasResults = idx.countCol ? (r[idx.countCol] || "").trim() !== "" : true;
       const st     = tournamentStatus(date, expiry, hasResults, today);
       const isFuture = !!(date && date > today);
-      return { tab, name, date, st, hasResults, isFuture };
+      const url = (idx.urlCol && (r[idx.urlCol] || "").trim())
+        ? r[idx.urlCol].trim() : (idx.urlPlaceholder || "");
+      return { tab, name, date, st, hasResults, isFuture, url };
     });
 
     // Prefer a tournament requested via the URL hash, if valid and clickable.
@@ -811,6 +883,7 @@ async function loadTournamentList() {
     selectedTab = initial.tab;
     renderTournamentList();
     renderStandingsMeta();
+    renderUpcoming();
     loadResults(initial.tab);
     requestedTab = null;
   } catch (e) {
@@ -923,6 +996,63 @@ function renderStandingsMeta() {
   el.hidden = false;
 }
 
+// ---- Upcoming tournament banners (two styles, for comparison) ----
+let rotatorTimer = null;
+function upcomingList() {
+  // Upcoming = future date; soonest first.
+  return TOURNAMENTS.filter(it => it.isFuture)
+    .slice()
+    .sort((a, b) => (a.date?.getTime() || 0) - (b.date?.getTime() || 0));
+}
+function upEntryHTML(it) {
+  const url = it.url || "#";
+  return `<a class="up-entry" href="${esc(url)}" target="naf-info" rel="noopener">` +
+         `<span class="up-name">${esc(it.name)}</span>` +
+         (it.date ? `<span class="up-sep">·</span><span class="up-date">${fmtDate(it.date)}</span>` : ``) +
+         `</a>`;
+}
+let rotatorIdx = 0;
+function rotateTo(i) {
+  const items = document.querySelectorAll("#up-rotate-track .up-item");
+  if (!items.length) return;
+  items[rotatorIdx]?.classList.remove("active");
+  rotatorIdx = (i + items.length) % items.length;
+  items[rotatorIdx].classList.add("active");
+}
+function startRotator(count) {
+  if (rotatorTimer) clearInterval(rotatorTimer);
+  if (count > 1) rotatorTimer = setInterval(() => rotateTo(rotatorIdx + 1), 3500);
+}
+function renderUpcoming() {
+  const rotator = document.getElementById("upcoming-rotator");
+  const list = upcomingList();
+  document.getElementById("up-label-1").textContent = t("upcomingLabel");
+
+  if (!list.length) {
+    rotator.hidden = true;
+    if (rotatorTimer) clearInterval(rotatorTimer);
+    return;
+  }
+  rotator.hidden = false;
+
+  const rTrack = document.getElementById("up-rotate-track");
+  rTrack.innerHTML = list.map((it, i) =>
+    `<div class="up-item${i === 0 ? " active" : ""}">${upEntryHTML(it)}</div>`).join("");
+  rotatorIdx = 0;
+  startRotator(list.length);
+
+  // Show/enable the next button only when there's more than one.
+  const next = document.getElementById("up-next");
+  next.style.display = list.length > 1 ? "" : "none";
+}
+
+// Manual advance: go to next and restart the auto-timer so it doesn't
+// jump again immediately after a click.
+document.getElementById("up-next").addEventListener("click", () => {
+  rotateTo(rotatorIdx + 1);
+  startRotator(upcomingList().length);
+});
+
 // ---- View switching ----
 let currentView = "standings";
 function switchView(view, { write = true } = {}) {
@@ -1005,6 +1135,7 @@ function setLang(lang) {
   if (TOURNAMENTS.length) {
     renderTournamentList();
     renderStandingsMeta();
+    renderUpcoming();
     if (currentResultsTab) loadResults(currentResultsTab);
   }
   writeHash();
