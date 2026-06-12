@@ -400,6 +400,11 @@
     border-bottom: 1px dotted var(--cobalt); transition: all .12s ease;
   }
   a.naf-link:hover { color: var(--orange); border-bottom-color: var(--orange); }
+    span.risk-icon {
+      display: inline-block; margin-left: 6px; cursor: help;
+      font-size: 14px; opacity: 0.8; transition: opacity .12s ease;
+    }
+    span.risk-icon:hover { opacity: 1; }
   td.name { font-weight: 600; color: var(--navy); }
   td.team { font-style: italic; color: var(--steel); }
 
@@ -624,7 +629,9 @@ const TRANSLATIONS = {
     legendPending:  "Gespeeld — resultaten volgen",
     legendUpcoming: "Aankomend toernooi",
     legendHistoric: "Historisch — telt niet meer mee",
-    months: ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"],
+      pointsAtRisk: "Punten komen te vervallen op",
+      riskTitle: "{name}: {points} punten vervallen op {date}",
+      months: ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"],
     cols: { pos:"#", name:"Coach", nafnr:"NAF #", points:"Punten",
             participant:"Coach", nafnumber:"NAF #", team:"Team" },
   },
@@ -662,7 +669,9 @@ const TRANSLATIONS = {
     legendPending:  "Played — results to follow",
     legendUpcoming: "Upcoming tournament",
     legendHistoric: "Historic — no longer counts",
-    months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
+      pointsAtRisk: "Points will expire on",
+      riskTitle: "{name}: {points} pts expire on {date}",
+      months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
     cols: { pos:"#", name:"Coach", nafnr:"NAF #", points:"Points",
             participant:"Coach", nafnumber:"NAF #", team:"Team" },
   },
@@ -726,6 +735,8 @@ function clearCache() {
   setTimeout(() => {
     if (status.textContent === t("cacheCleared")) status.textContent = "";
   }, 3000);
+  // Reload to ensure fresh data is fetched after clearing cache
+  setTimeout(() => { try { location.reload(); } catch (e) {} }, 600);
 }
 
 // Accepts either a tab name (string) or {gid:"..."} to target a tab.
@@ -845,10 +856,24 @@ function renderTable(host, cols, rows, opts = {}) {
         else if (/naf/i.test(c.col)) klass = "naf";
         else if (/team/i.test(c.col)) klass = "team";
         else if (/deelnemer|coach|naam/i.test(c.col)) klass = "name";
+          else if (/points|punten/i.test(c.col)) klass = "points";
       }
       // Turn a NAF number into a link to the coach's NAF page. Opens in a
       // named window so repeated clicks reuse the same tab.
       let cell = esc(v) || "—";
+        // Add risk icon to points column if coach has points in soonest-expiring tournament
+        if (klass === "points" && opts.riskMap && opts.riskTourney) {
+          const nafCol = CONFIG.STANDINGS_COLUMNS.find(col => col.key === "nafnr")?.col;
+          const nafNum = (r[nafCol] || "").trim();
+          if (opts.riskMap.has(nafNum)) {
+            const riskPoints = opts.riskMap.get(nafNum).points;
+            const tmpl = t('riskTitle') || '{name}: {points} pts expire on {date}';
+            const title = tmpl.replace('{name}', esc(opts.riskTourney.name))
+                              .replace('{points}', String(riskPoints))
+                              .replace('{date}', esc(fmtDate(opts.riskTourney.expiry)));
+            cell += ` <span class="risk-icon" title="${title}">📉</span>`;
+          }
+        }
       if (klass === "naf" && /^\d+$/.test(v.trim())) {
         const n = v.trim(); // digits only, validated by the regex above
         const url = `https://member.thenaf.net/index.php?module=NAF&type=coachpage&coach=${n}`;
@@ -911,7 +936,14 @@ async function loadStandings() {
       return Number.isFinite(n) && n >= 1;
     });
     if (CONFIG.STANDINGS_SORT_DESC) rows = sortDesc(rows, CONFIG.STANDINGS_SORT_DESC);
-    renderTable(host, CONFIG.STANDINGS_COLUMNS, rows, { medals: true, autoPos: true, noSpoon: true });
+    const riskData = await getExpiryRiskData();
+    renderTable(host, CONFIG.STANDINGS_COLUMNS, rows, { 
+      medals: true, 
+      autoPos: true, 
+      noSpoon: true,
+      riskMap: riskData?.riskMap,
+      riskTourney: riskData?.tourney
+    });
   } catch (e) {
     errorState(host, CONFIG.STANDINGS_TAB);
   }
@@ -1075,6 +1107,8 @@ async function loadTournamentList() {
     renderUpcoming();
     loadResults(initial.tab);
     requestedTab = null;
+    // Re-load standings now that TOURNAMENTS (and expiry dates) are available
+    loadStandings();
   } catch (e) {
     document.getElementById("results-host").innerHTML =
       `<div class="state err">${t("errList")}
@@ -1089,6 +1123,37 @@ function getTournamentFlagHint(tournament) {
     return `${baseHint} (${t("countsUntil")} ${fmtDate(tournament.expiry)})`;
   }
   return baseHint;
+}
+
+// Finds the soonest-expiring Active tournament and fetches coach points from it.
+// Returns { riskMap, tourney } where riskMap is Map(nafNum → pointsInfo)
+async function getExpiryRiskData() {
+  const activeWithExpiry = TOURNAMENTS
+    .filter(t => t.st.kind === "Active" && t.expiry)
+    .sort((a, b) => (a.expiry?.getTime() || 0) - (b.expiry?.getTime() || 0));
+  if (!activeWithExpiry.length) return null;
+  
+  const nextExpiring = activeWithExpiry[0];
+  try {
+    const { rows } = await fetchTab(nextExpiring.tab);
+    const riskMap = new Map();
+    const nafCol = CONFIG.RESULT_COLUMNS.find(c => c.key === "nafnumber")?.col;
+    const ptsCol = CONFIG.RESULT_COLUMNS.find(c => c.key === "points")?.col;
+    
+    if (!nafCol || !ptsCol) return null;
+    
+    rows.forEach(r => {
+      const naf = (r[nafCol] || "").trim();
+      const pts = parseFloat(String(r[ptsCol] || "").replace(",", "."));
+      if (naf && Number.isFinite(pts) && pts > 0) {
+        riskMap.set(naf, { points: pts });
+      }
+    });
+    
+    return { riskMap, tourney: nextExpiring };
+  } catch {
+    return null;
+  }
 }
 
 // Renders the sidebar from TOURNAMENTS; safe to call again on language
