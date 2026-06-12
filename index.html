@@ -1127,13 +1127,14 @@ function getTournamentFlagHint(tournament) {
   return baseHint;
 }
 
-// Finds the soonest-expiring Active tournament and reads coach points from
-// the Deelnemers tab columns instead of fetching the tournament results.
+// Finds all tournaments with expiry dates and reads coach points from
+// the Deelnemers tab columns. For each coach, uses the first tournament (by expiry) with non-zero points.
 function getExpiryRiskData(standingsRows) {
-  const activeWithExpiry = TOURNAMENTS
-    .filter(t => t.st.kind === "Active" && t.expiry)
+  // Get all tournaments with expiry dates, sorted by expiry (includes past and future)
+  const tourneysWithExpiry = TOURNAMENTS
+    .filter(t => t.expiry)
     .sort((a, b) => (a.expiry?.getTime() || 0) - (b.expiry?.getTime() || 0));
-  if (!activeWithExpiry.length || !standingsRows.length) return null;
+  if (!tourneysWithExpiry.length || !standingsRows.length) return null;
 
   const normalize = (text) => String(text || "").trim().toLowerCase()
     .replace(/[^a-z0-9]+/g, "");
@@ -1142,20 +1143,28 @@ function getExpiryRiskData(standingsRows) {
   const nafCol = CONFIG.STANDINGS_COLUMNS.find(c => c.key === "nafnr")?.col;
   if (!nafCol) return null;
 
-  const matchesTournamentColumn = (header, tourney) => {
-    const normalizedHeader = normalize(header);
-    const normalizedTab = normalize(tourney.tab);
+  const remainingHeaders = [...headers];
+  const tournamentColumns = tourneysWithExpiry.map(tourney => {
+    const normalizedCode = normalize(tourney.tab);
+    
+    // First try: exact match on tournament code
+    let bestHeader = remainingHeaders.find(h => normalize(h) === normalizedCode);
+    
+    if (bestHeader) {
+      remainingHeaders.splice(remainingHeaders.indexOf(bestHeader), 1);
+      return { tourney, header: bestHeader };
+    }
+    
+    // Fall back to name match only if code match fails
     const normalizedName = normalize(tourney.name);
-    if (!normalizedHeader) return false;
-    if (normalizedHeader === normalizedTab || normalizedHeader === normalizedName) return true;
-    if (normalizedHeader.includes(normalizedTab) || normalizedHeader.includes(normalizedName)) return true;
-    if (normalizedTab.includes(normalizedHeader) || normalizedName.includes(normalizedHeader)) return true;
-    return false;
-  };
-
-  const tournamentColumns = activeWithExpiry.map(tourney => {
-    const header = headers.find(header => matchesTournamentColumn(header, tourney));
-    return header ? { tourney, header } : null;
+    bestHeader = remainingHeaders.find(h => normalize(h) === normalizedName);
+    
+    if (bestHeader) {
+      remainingHeaders.splice(remainingHeaders.indexOf(bestHeader), 1);
+      return { tourney, header: bestHeader };
+    }
+    
+    return null;
   }).filter(Boolean);
   if (!tournamentColumns.length) return null;
 
