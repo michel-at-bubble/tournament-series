@@ -630,7 +630,8 @@ const TRANSLATIONS = {
     legendUpcoming: "Aankomend toernooi",
     legendHistoric: "Historisch — telt niet meer mee",
       pointsAtRisk: "Punten komen te vervallen op",
-      riskTitle: "{name}: {points} punten vervallen op {date}",
+      riskTitleSingular: "{name}: {points} punt vervalt op {date}",
+      riskTitlePlural: "{name}: {points} punten vervallen op {date}",
       months: ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"],
     cols: { pos:"#", name:"Coach", nafnr:"NAF #", points:"Punten",
             participant:"Coach", nafnumber:"NAF #", team:"Team" },
@@ -670,7 +671,8 @@ const TRANSLATIONS = {
     legendUpcoming: "Upcoming tournament",
     legendHistoric: "Historic — no longer counts",
       pointsAtRisk: "Points will expire on",
-      riskTitle: "{name}: {points} pts expire on {date}",
+      riskTitleSingular: "{name}: {points} point expires on {date}",
+      riskTitlePlural: "{name}: {points} points expire on {date}",
       months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
     cols: { pos:"#", name:"Coach", nafnr:"NAF #", points:"Points",
             participant:"Coach", nafnumber:"NAF #", team:"Team" },
@@ -861,19 +863,20 @@ function renderTable(host, cols, rows, opts = {}) {
       // Turn a NAF number into a link to the coach's NAF page. Opens in a
       // named window so repeated clicks reuse the same tab.
       let cell = esc(v) || "—";
-        // Add risk icon to points column if coach has points in soonest-expiring tournament
-        if (klass === "points" && opts.riskMap && opts.riskTourney) {
-          const nafCol = CONFIG.STANDINGS_COLUMNS.find(col => col.key === "nafnr")?.col;
-          const nafNum = (r[nafCol] || "").trim();
-          if (opts.riskMap.has(nafNum)) {
-            const riskPoints = opts.riskMap.get(nafNum).points;
-            const tmpl = t('riskTitle') || '{name}: {points} pts expire on {date}';
-            const title = tmpl.replace('{name}', esc(opts.riskTourney.name))
-                              .replace('{points}', String(riskPoints))
-                              .replace('{date}', esc(fmtDate(opts.riskTourney.expiry)));
-            cell += ` <span class="risk-icon" title="${title}">📉</span>`;
-          }
+      // Add risk icon to points column if coach has points in a soonest-expiring tournament
+      if (klass === "points" && opts.riskMap) {
+        const nafCol = CONFIG.STANDINGS_COLUMNS.find(col => col.key === "nafnr")?.col;
+        const nafNum = (r[nafCol] || "").trim();
+        if (opts.riskMap.has(nafNum)) {
+          const riskInfo = opts.riskMap.get(nafNum);
+          const tmpl = t(riskInfo.points === 1 ? 'riskTitleSingular' : 'riskTitlePlural');
+          const title = (tmpl || '{name}: {points} points expire on {date}')
+            .replace('{name}', esc(riskInfo.tourney.name))
+            .replace('{points}', String(riskInfo.points))
+            .replace('{date}', esc(fmtDate(riskInfo.tourney.expiry)));
+          cell += ` <span class="risk-icon" title="${title}">📉</span>`;
         }
+      }
       if (klass === "naf" && /^\d+$/.test(v.trim())) {
         const n = v.trim(); // digits only, validated by the regex above
         const url = `https://member.thenaf.net/index.php?module=NAF&type=coachpage&coach=${n}`;
@@ -936,13 +939,12 @@ async function loadStandings() {
       return Number.isFinite(n) && n >= 1;
     });
     if (CONFIG.STANDINGS_SORT_DESC) rows = sortDesc(rows, CONFIG.STANDINGS_SORT_DESC);
-    const riskData = await getExpiryRiskData();
+    const riskData = getExpiryRiskData(rows);
     renderTable(host, CONFIG.STANDINGS_COLUMNS, rows, { 
       medals: true, 
       autoPos: true, 
       noSpoon: true,
-      riskMap: riskData?.riskMap,
-      riskTourney: riskData?.tourney
+      riskMap: riskData?.riskMap
     });
   } catch (e) {
     errorState(host, CONFIG.STANDINGS_TAB);
@@ -1125,35 +1127,52 @@ function getTournamentFlagHint(tournament) {
   return baseHint;
 }
 
-// Finds the soonest-expiring Active tournament and fetches coach points from it.
-// Returns { riskMap, tourney } where riskMap is Map(nafNum → pointsInfo)
-async function getExpiryRiskData() {
+// Finds the soonest-expiring Active tournament and reads coach points from
+// the Deelnemers tab columns instead of fetching the tournament results.
+function getExpiryRiskData(standingsRows) {
   const activeWithExpiry = TOURNAMENTS
     .filter(t => t.st.kind === "Active" && t.expiry)
     .sort((a, b) => (a.expiry?.getTime() || 0) - (b.expiry?.getTime() || 0));
-  if (!activeWithExpiry.length) return null;
-  
-  const nextExpiring = activeWithExpiry[0];
-  try {
-    const { rows } = await fetchTab(nextExpiring.tab);
-    const riskMap = new Map();
-    const nafCol = CONFIG.RESULT_COLUMNS.find(c => c.key === "nafnumber")?.col;
-    const ptsCol = CONFIG.RESULT_COLUMNS.find(c => c.key === "points")?.col;
-    
-    if (!nafCol || !ptsCol) return null;
-    
-    rows.forEach(r => {
-      const naf = (r[nafCol] || "").trim();
-      const pts = parseFloat(String(r[ptsCol] || "").replace(",", "."));
-      if (naf && Number.isFinite(pts) && pts > 0) {
-        riskMap.set(naf, { points: pts });
+  if (!activeWithExpiry.length || !standingsRows.length) return null;
+
+  const normalize = (text) => String(text || "").trim().toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+
+  const headers = Object.keys(standingsRows[0]);
+  const nafCol = CONFIG.STANDINGS_COLUMNS.find(c => c.key === "nafnr")?.col;
+  if (!nafCol) return null;
+
+  const matchesTournamentColumn = (header, tourney) => {
+    const normalizedHeader = normalize(header);
+    const normalizedTab = normalize(tourney.tab);
+    const normalizedName = normalize(tourney.name);
+    if (!normalizedHeader) return false;
+    if (normalizedHeader === normalizedTab || normalizedHeader === normalizedName) return true;
+    if (normalizedHeader.includes(normalizedTab) || normalizedHeader.includes(normalizedName)) return true;
+    if (normalizedTab.includes(normalizedHeader) || normalizedName.includes(normalizedHeader)) return true;
+    return false;
+  };
+
+  const tournamentColumns = activeWithExpiry.map(tourney => {
+    const header = headers.find(header => matchesTournamentColumn(header, tourney));
+    return header ? { tourney, header } : null;
+  }).filter(Boolean);
+  if (!tournamentColumns.length) return null;
+
+  const riskMap = new Map();
+  standingsRows.forEach(r => {
+    const naf = (r[nafCol] || "").trim();
+    if (!naf) return;
+    for (const { tourney, header } of tournamentColumns) {
+      const pts = parseFloat(String(r[header] || "").replace(",", "."));
+      if (Number.isFinite(pts) && pts > 0) {
+        riskMap.set(naf, { points: pts, tourney });
+        break;
       }
-    });
-    
-    return { riskMap, tourney: nextExpiring };
-  } catch {
-    return null;
-  }
+    }
+  });
+
+  return { riskMap };
 }
 
 // Renders the sidebar from TOURNAMENTS; safe to call again on language
