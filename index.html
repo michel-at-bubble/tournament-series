@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dutch Blood Bowl Association — Resultaten</title>
+<title>Blood Bowl Netherlands — Resultaten</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Spectral:ital,wght@0,400;0,600;0,800;1,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -619,6 +619,7 @@ const TRANSLATIONS = {
     flagPending:  "Gespeeld — resultaten nog niet binnen",
     flagActive:   "Telt mee voor de huidige competitiestand",
     flagHistoric: "Historisch — telt niet meer mee",
+    countsUntil:  "Telt mee tot en met",
     legendActive:   "Telt mee voor de huidige stand",
     legendPending:  "Gespeeld — resultaten volgen",
     legendUpcoming: "Aankomend toernooi",
@@ -656,6 +657,7 @@ const TRANSLATIONS = {
     flagPending:  "Played — results not in yet",
     flagActive:   "Counts toward the current league standings",
     flagHistoric: "Historic — no longer counts",
+    countsUntil:  "Counts until",
     legendActive:   "Counts toward the current standings",
     legendPending:  "Played — results to follow",
     legendUpcoming: "Upcoming tournament",
@@ -1052,7 +1054,7 @@ async function loadTournamentList() {
         ? sanitizeHref(r[idx.urlCol].trim())
         : (idx.urlPlaceholder || "");
       const url = sanitizeHref(nafLink) || fallbackURL;
-      return { tab, name, date, st, hasResults, isFuture, url };
+      return { tab, name, date, expiry, st, hasResults, isFuture, url };
     });
 
     // Prefer a tournament requested via the URL hash, if valid and clickable.
@@ -1080,6 +1082,15 @@ async function loadTournamentList() {
   }
 }
 
+// Generates the full flag hint text, including the expiry date for active tournaments
+function getTournamentFlagHint(tournament) {
+  const baseHint = t("flag" + tournament.st.kind);
+  if (tournament.st.kind === "Active" && tournament.expiry) {
+    return `${baseHint} (${t("countsUntil")} ${fmtDate(tournament.expiry)})`;
+  }
+  return baseHint;
+}
+
 // Renders the sidebar from TOURNAMENTS; safe to call again on language
 // change or when toggling the future-tournaments visibility.
 function renderTournamentList() {
@@ -1098,7 +1109,7 @@ function renderTournamentList() {
       + (it.st.clickable ? "" : " disabled");
     btn.innerHTML =
       `<span class="ti-name"><span class="ti-text">${esc(it.name)}</span>` +
-      `<span class="ti-flag" title="${t("flag" + it.st.kind)}">${it.st.flag}</span>` +
+      `<span class="ti-flag" title="${getTournamentFlagHint(it)}">${it.st.flag}</span>` +
       `</span>` +
       (it.date ? `<span class="ti-date">${fmtDate(it.date)}</span>` : ``);
     if (it.st.clickable) {
