@@ -233,7 +233,87 @@
   .retry:hover { background: rgba(0,85,212,.08); border-color: var(--cobalt); }
   .show-future { margin-top: 0; margin-bottom: 6px; }
   .show-future.on { background: rgba(0,85,212,.12); }
+  .coach-name-btn {
+    border: 0; background: transparent; padding: 0; color: inherit;
+    font: inherit; font-weight: 600; text-align: left; cursor: pointer;
+    text-decoration: underline; text-decoration-color: rgba(0,85,212,.35);
+    text-underline-offset: 2px;
+  }
+  .coach-name-btn:hover { color: var(--cobalt); text-decoration-color: var(--cobalt); }
   .results-main { flex: 1 1 auto; min-width: 0; }
+  .coach-modal-backdrop {
+    position: fixed; inset: 0; z-index: 50;
+    background: rgba(1,0,80,.48); backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .coach-modal-backdrop[hidden] { display: none !important; }
+  .coach-modal {
+    width: min(720px, 100%); max-height: min(86vh, 760px);
+    overflow: auto; background: var(--parchment); border-radius: 14px;
+    box-shadow: 0 24px 70px rgba(1,0,80,.28); border: 1px solid rgba(1,0,80,.14);
+    padding: 22px 24px 24px; position: relative;
+  }
+  .coach-modal-close {
+    position: absolute; right: 12px; top: 10px; border: 0; background: transparent;
+    color: var(--navy); font-size: 28px; cursor: pointer; line-height: 1;
+  }
+  .coach-modal-header { margin-bottom: 16px; }
+  .coach-modal-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: clamp(24px, 4vw, 32px);
+    letter-spacing: .04em; color: var(--navy); margin-bottom: 4px;
+  }
+  .coach-modal-subtitle { color: var(--steel); font-size: 15px; }
+  .coach-modal-summary {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px;
+  }
+  .coach-modal-metric {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 999px; background: rgba(255,255,255,.72);
+    border: 1px solid rgba(1,0,80,.1); color: var(--navy); font-size: 14px;
+  }
+  .coach-modal-metric-label { color: var(--steel); font-size: 13px; }
+  .coach-modal-metric strong { font-weight: 700; color: var(--navy); }
+  .coach-modal-naf {
+    margin-top: 10px; display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 10px; border-radius: 999px; background: rgba(0,85,212,.08);
+    color: var(--navy); font-size: 14px;
+    flex-wrap: wrap;
+  }
+  .coach-modal-naf a { color: var(--cobalt); font-weight: 600; text-decoration: none; }
+  .coach-modal-naf a:hover { color: var(--orange); }
+  .coach-modal-naf-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 1.05em; height: 1.05em; margin-left: .25em;
+    border-radius: 50%; background: rgba(0,85,212,.12); color: var(--cobalt);
+    font-size: .95em; line-height: 1;
+  }
+  .coach-modal-list { display: grid; gap: 10px; }
+  .coach-modal-item {
+    display: flex; justify-content: space-between; gap: 14px; align-items: center;
+    padding: 12px 13px; border-radius: 10px; border: 1px solid rgba(1,0,80,.12);
+    background: rgba(255,255,255,.72);
+  }
+  .coach-modal-item.counting {
+    border-color: rgba(248,104,8,.28); box-shadow: inset 3px 0 0 var(--orange);
+    background: linear-gradient(90deg, rgba(248,104,8,.12), rgba(255,255,255,.72));
+  }
+  .coach-modal-item.reserve {
+    border-color: rgba(47,82,51,.22); box-shadow: inset 3px 0 0 var(--green);
+    background: linear-gradient(90deg, rgba(47,82,51,.09), rgba(255,255,255,.72));
+  }
+  .coach-modal-item.historic { opacity: .82; }
+  .coach-modal-item-name { font-weight: 700; color: var(--navy); }
+  .coach-modal-item-date { font-size: 13px; color: var(--steel); margin-top: 2px; }
+  .coach-modal-item-meta { text-align: right; min-width: 140px; }
+  .coach-modal-points { font-weight: 700; color: var(--navy); }
+  .coach-modal-status {
+    margin-top: 4px; display: inline-block; padding: 4px 8px; border-radius: 999px;
+    font-size: 12px; font-weight: 700; letter-spacing: .03em;
+  }
+  .coach-modal-status.active { background: rgba(0,85,212,.12); color: var(--cobalt); }
+  .coach-modal-status.reserve { background: rgba(47,82,51,.12); color: var(--green); }
+  .coach-modal-status.historic { background: rgba(1,0,80,.08); color: var(--steel); }
   #results-host { position: relative; }
   #results-host.loading .tablecard {
     filter: grayscale(.35) brightness(1.05);
@@ -533,6 +613,19 @@
     </footer>
   </div>
 
+  <div class="coach-modal-backdrop" id="coach-modal-backdrop" hidden>
+    <div class="coach-modal" role="dialog" aria-modal="true" aria-labelledby="coach-modal-title" aria-hidden="true">
+      <button class="coach-modal-close" id="coach-modal-close" aria-label="Close">×</button>
+      <div class="coach-modal-header">
+        <div class="coach-modal-title" id="coach-modal-title"></div>
+        <div class="coach-modal-subtitle" id="coach-modal-subtitle"></div>
+        <div class="coach-modal-summary" id="coach-modal-summary"></div>
+        <div class="coach-modal-naf" id="coach-modal-naf"></div>
+      </div>
+      <div class="coach-modal-list" id="coach-modal-list"></div>
+    </div>
+  </div>
+
 <script>
 /* ================================================================
    CONFIGURATION — this is the ONLY block you edit.
@@ -632,6 +725,17 @@ const TRANSLATIONS = {
       pointsAtRisk: "Punten komen te vervallen op",
       riskTitleSingular: "{name}: {points} punt vervalt op {date}",
       riskTitlePlural: "{name}: {points} punten vervallen op {date}",
+      coachModalTitle: "Coachoverzicht",
+      coachModalSubtitle: "Gespeelde toernooien met punten",
+      coachModalNoHistory: "Geen toernooien met punten geregistreerd.",
+      coachModalCountsNow: "Telt nu mee",
+      coachModalReserve: "Reserve",
+      coachModalNoLongerCounts: "Telt niet meer mee",
+      coachModalPoints: "punten",
+      coachModalTotal: "Huidig totaal",
+      coachModalPosition: "Positie",
+      coachModalNafHint: "Open NAF-pagina in nieuw venster",
+      coachModalClose: "Sluiten",
       months: ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"],
     cols: { pos:"#", name:"Coach", nafnr:"NAF #", points:"Punten",
             participant:"Coach", nafnumber:"NAF #", team:"Team" },
@@ -673,6 +777,17 @@ const TRANSLATIONS = {
       pointsAtRisk: "Points will expire on",
       riskTitleSingular: "{name}: {points} point expires on {date}",
       riskTitlePlural: "{name}: {points} points expire on {date}",
+      coachModalTitle: "Coach overview",
+      coachModalSubtitle: "Played tournaments with points",
+      coachModalNoHistory: "No tournaments with points recorded.",
+      coachModalCountsNow: "Counts now",
+      coachModalReserve: "Reserve",
+      coachModalNoLongerCounts: "No longer counts",
+      coachModalPoints: "points",
+      coachModalTotal: "Current total",
+      coachModalPosition: "Position",
+      coachModalNafHint: "Open NAF page in a new window",
+      coachModalClose: "Close",
       months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
     cols: { pos:"#", name:"Coach", nafnr:"NAF #", points:"Points",
             participant:"Coach", nafnumber:"NAF #", team:"Team" },
@@ -860,8 +975,6 @@ function renderTable(host, cols, rows, opts = {}) {
         else if (/deelnemer|coach|naam/i.test(c.col)) klass = "name";
           else if (/points|punten/i.test(c.col)) klass = "points";
       }
-      // Turn a NAF number into a link to the coach's NAF page. Opens in a
-      // named window so repeated clicks reuse the same tab.
       let cell = esc(v) || "—";
       // Add risk icon to points column if coach has points in a soonest-expiring tournament
       if (klass === "points" && opts.riskMap) {
@@ -877,10 +990,12 @@ function renderTable(host, cols, rows, opts = {}) {
           cell += ` <span class="risk-icon" title="${title}">📉</span>`;
         }
       }
-      if (klass === "naf" && /^\d+$/.test(v.trim())) {
-        const n = v.trim(); // digits only, validated by the regex above
-        const url = `https://member.thenaf.net/index.php?module=NAF&type=coachpage&coach=${n}`;
-        cell = `<a class="naf-link" href="${url}" target="naf" rel="noopener">${n}</a>`;
+      if (klass === "name" && opts.coachModal) {
+        const nameValue = r[CONFIG.STANDINGS_COLUMNS.find(col => col.key === "name")?.col] || "";
+        const nafValue = (r[CONFIG.STANDINGS_COLUMNS.find(col => col.key === "nafnr")?.col] || "").trim();
+        cell = `<button type="button" class="coach-name-btn" data-row-index="${ri}" data-rank="${ri + 1}" data-name="${esc(nameValue)}" data-naf="${esc(nafValue)}">${esc(nameValue)}</button>`;
+      } else if (klass === "naf") {
+        cell = esc(v) || "—";
       }
       return `<td class="col-${c.key} ${klass}">${cell}</td>`;
     }).join("");
@@ -893,6 +1008,174 @@ function renderTable(host, cols, rows, opts = {}) {
       `</div>` : ``;
   host.innerHTML =
     `<div class="tablecard">${captionHTML}<table><thead><tr>${thead}</tr></thead><tbody>${body}</tbody></table></div>`;
+
+  if (opts.coachModal) {
+    host.querySelectorAll('.coach-name-btn').forEach(btn => {
+      btn.addEventListener('click', () => openCoachModal(
+        rows[Number(btn.getAttribute('data-row-index'))],
+        Number(btn.getAttribute('data-rank')) || null
+      ));
+    });
+  }
+}
+
+let activeCoachModalRow = null;
+let activeCoachModalRank = null;
+
+function getCoachModalData(row, rank = null) {
+  const headers = Object.keys(row || {});
+  const normalize = (text) => String(text || "").trim().toLowerCase().replace(/[^a-z0-9]+/g, "");
+  const remainingHeaders = [...headers];
+  const nameCol = CONFIG.STANDINGS_COLUMNS.find(col => col.key === "name")?.col;
+  const nafCol = CONFIG.STANDINGS_COLUMNS.find(col => col.key === "nafnr")?.col;
+  const today = new Date();
+
+  const history = TOURNAMENTS.map(tourney => {
+    const normalizedCode = normalize(tourney.tab);
+    let bestHeader = remainingHeaders.find(h => normalize(h) === normalizedCode);
+    if (!bestHeader) {
+      const normalizedName = normalize(tourney.name);
+      bestHeader = remainingHeaders.find(h => normalize(h) === normalizedName);
+    }
+    if (!bestHeader) return null;
+    remainingHeaders.splice(remainingHeaders.indexOf(bestHeader), 1);
+    const rawValue = row[bestHeader] ?? "";
+    const trimmed = String(rawValue).trim();
+    if (!trimmed) return null;
+    const points = parseFloat(trimmed.replace(",", "."));
+    const activeNow = Boolean(tourney.date && tourney.date <= today && (!tourney.expiry || tourney.expiry >= today));
+    return {
+      tourney,
+      points: Number.isFinite(points) ? points : 0,
+      activeNow
+    };
+  }).filter(Boolean);
+
+  const activeTournamentCount = TOURNAMENTS.filter(tourney => {
+    const tourneyDate = tourney.date;
+    return Boolean(tourneyDate && tourneyDate <= today && (!tourney.expiry || tourney.expiry >= today));
+  }).length;
+  const countLimit = Math.max(0, Math.ceil(activeTournamentCount / 2));
+  const countedTabs = new Set(
+    history
+      .filter(item => item.activeNow && item.points > 0)
+      .sort((a, b) => {
+        if (b.points !== a.points) return b.points - a.points;
+        return (a.tourney.date?.getTime() || 0) - (b.tourney.date?.getTime() || 0);
+      })
+      .slice(0, countLimit)
+      .map(item => item.tourney.tab)
+  );
+
+  const rankedHistory = history
+    .map(item => ({
+      ...item,
+      counts: Boolean(item.activeNow && countedTabs.has(item.tourney.tab))
+    }))
+    .sort((a, b) => {
+      const aTime = a.tourney.date ? a.tourney.date.getTime() : 0;
+      const bTime = b.tourney.date ? b.tourney.date.getTime() : 0;
+      return bTime - aTime;
+    });
+
+  const pointsCol = CONFIG.STANDINGS_COLUMNS.find(col => col.key === "points")?.col;
+  const totalPoints = parseFloat(String(row?.[pointsCol] ?? "").replace(",", "."));
+
+  return {
+    name: row?.[nameCol] || "",
+    naf: (row?.[nafCol] || "").trim(),
+    rank: Number.isFinite(rank) ? rank : null,
+    totalPoints: Number.isFinite(totalPoints) ? totalPoints : 0,
+    history: rankedHistory
+  };
+}
+
+function renderCoachModal() {
+  const backdrop = document.getElementById("coach-modal-backdrop");
+  const modal = backdrop?.querySelector('.coach-modal');
+  const title = document.getElementById("coach-modal-title");
+  const subtitle = document.getElementById("coach-modal-subtitle");
+  const nafHost = document.getElementById("coach-modal-naf");
+  const listHost = document.getElementById("coach-modal-list");
+  if (!backdrop || !modal || !title || !subtitle || !nafHost || !listHost) return;
+
+  if (!activeCoachModalRow) {
+    backdrop.hidden = true;
+    backdrop.style.display = "none";
+    modal.hidden = true;
+    modal.style.display = "none";
+    modal.setAttribute('aria-hidden', 'true');
+    title.textContent = "";
+    subtitle.textContent = "";
+    nafHost.hidden = true;
+    nafHost.innerHTML = "";
+    listHost.innerHTML = "";
+    return;
+  }
+
+  const data = getCoachModalData(activeCoachModalRow, activeCoachModalRank);
+  title.textContent = data.name || t("coachModalTitle");
+  subtitle.textContent = t("coachModalSubtitle");
+  const summaryHost = document.getElementById("coach-modal-summary");
+  if (summaryHost) {
+    summaryHost.innerHTML = `
+      <div class="coach-modal-metric">
+        <span class="coach-modal-metric-label">${t("coachModalTotal")}</span>
+        <strong>${data.totalPoints} ${t("coachModalPoints")}</strong>
+      </div>
+      <div class="coach-modal-metric">
+        <span class="coach-modal-metric-label">${t("coachModalPosition")}</span>
+        <strong>${data.rank ? `#${data.rank}` : "—"}</strong>
+      </div>
+    `;
+  }
+  if (data.naf) {
+    const nafUrl = `https://member.thenaf.net/index.php?module=NAF&type=coachpage&coach=${data.naf}`;
+    nafHost.innerHTML = `<span>NAF #</span> <a href="${nafUrl}" target="_blank" rel="noopener noreferrer" title="${esc(t("coachModalNafHint"))}">${esc(data.naf)}<span class="coach-modal-naf-icon" aria-hidden="true">↗</span></a>`;
+    nafHost.hidden = false;
+  } else {
+    nafHost.hidden = true;
+    nafHost.innerHTML = "";
+  }
+
+  if (!data.history.length) {
+    listHost.innerHTML = `<div class="state">${t("coachModalNoHistory")}</div>`;
+  } else {
+    listHost.innerHTML = data.history.map(item => {
+      const statusClass = item.counts ? "active" : item.activeNow ? "reserve" : "historic";
+      const statusText = item.counts ? t("coachModalCountsNow") : item.activeNow ? t("coachModalReserve") : t("coachModalNoLongerCounts");
+      const itemClass = item.counts ? "counting" : item.activeNow ? "reserve" : "historic";
+      return `
+        <div class="coach-modal-item ${itemClass}">
+          <div>
+            <div class="coach-modal-item-name">${esc(item.tourney.name)}</div>
+            <div class="coach-modal-item-date">${item.tourney.date ? fmtDate(item.tourney.date) : ""}</div>
+          </div>
+          <div class="coach-modal-item-meta">
+            <div class="coach-modal-points">${item.points} ${t("coachModalPoints")}</div>
+            <div class="coach-modal-status ${statusClass}">${statusText}</div>
+          </div>
+        </div>
+      `;
+    }).join("");
+  }
+  backdrop.hidden = false;
+  backdrop.style.display = "flex";
+  modal.hidden = false;
+  modal.style.display = "block";
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function openCoachModal(row, rank = null) {
+  activeCoachModalRow = row;
+  activeCoachModalRank = rank;
+  renderCoachModal();
+}
+
+function closeCoachModal() {
+  activeCoachModalRow = null;
+  activeCoachModalRank = null;
+  renderCoachModal();
 }
 
 function loading(host, msg) {
@@ -944,7 +1227,8 @@ async function loadStandings() {
       medals: true, 
       autoPos: true, 
       noSpoon: true,
-      riskMap: riskData?.riskMap
+      riskMap: riskData?.riskMap,
+      coachModal: true
     });
   } catch (e) {
     errorState(host, CONFIG.STANDINGS_TAB);
@@ -1419,6 +1703,25 @@ const FLAG_GB =
    </svg>`;
 document.getElementById("lang-nl").innerHTML = FLAG_NL;
 document.getElementById("lang-en").innerHTML = FLAG_GB;
+
+const coachModalBackdrop = document.getElementById("coach-modal-backdrop");
+const coachModalClose = document.getElementById("coach-modal-close");
+if (coachModalBackdrop) {
+  coachModalBackdrop.addEventListener("click", (e) => {
+    if (e.target === coachModalBackdrop) closeCoachModal();
+  });
+}
+if (coachModalClose) {
+  coachModalClose.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeCoachModal();
+  });
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && activeCoachModalRow) closeCoachModal();
+});
+renderCoachModal();
 
 function setLang(lang) {
   if (lang === LANG) return;
