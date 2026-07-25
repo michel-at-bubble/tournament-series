@@ -64,6 +64,13 @@
   .langtoggle {
     position: absolute; top: 16px; right: 18px;
     display: flex; gap: 4px; z-index: 5;
+    align-items: center;
+  }
+  .series-info-wrap {
+    position: absolute; top: 16px; left: 18px;
+    display: inline-flex;
+    align-items: center;
+    z-index: 5;
   }
   .flag-btn {
     width: 34px; height: 23px; padding: 0; cursor: pointer;
@@ -106,6 +113,49 @@
     color: var(--steel);
     margin-top: 10px;
   }
+  .series-info-btn {
+    border: 1px solid rgba(1,0,80,.2);
+    border-radius: 999px;
+    background: rgba(255,255,255,.72);
+    color: var(--navy);
+    cursor: pointer;
+    font: inherit;
+    padding: 8px 14px;
+    transition: all .16s ease;
+  }
+  .series-info-btn:hover {
+    border-color: var(--cobalt);
+    color: var(--cobalt);
+    background: rgba(0,85,212,.08);
+  }
+  .series-info-backdrop {
+    position: fixed; inset: 0; z-index: 60;
+    background: rgba(1,0,80,.48); backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .series-info-backdrop[hidden] { display: none !important; }
+  .series-info-modal {
+    width: min(720px, 100%); max-height: min(86vh, 760px);
+    overflow: auto; background: var(--parchment); border-radius: 14px;
+    box-shadow: 0 24px 70px rgba(1,0,80,.28); border: 1px solid rgba(1,0,80,.14);
+    padding: 24px 24px 26px; position: relative;
+  }
+  .series-info-close {
+    position: absolute; right: 12px; top: 10px; border: 0; background: transparent;
+    color: var(--navy); font-size: 28px; cursor: pointer; line-height: 1;
+  }
+  .series-info-title {
+    font-family: 'Bebas Neue', sans-serif; font-size: clamp(24px, 4vw, 32px);
+    letter-spacing: .04em; color: var(--navy); margin-bottom: 12px;
+  }
+  .series-info-body {
+    color: var(--ink);
+    display: grid; gap: 12px;
+    font-size: 16px;
+  }
+  .series-info-body p { line-height: 1.6; }
+  .series-info-body strong { color: var(--navy); }
 
   /* ---------- Tabs / nav ---------- */
   nav.viewtabs {
@@ -558,6 +608,9 @@
 </head>
 <body>
   <header>
+    <div class="series-info-wrap">
+      <button class="series-info-btn" id="series-info-btn" type="button" aria-haspopup="dialog" aria-controls="series-info-backdrop">Hoe werkt de serie?</button>
+    </div>
     <div class="langtoggle">
       <button class="flag-btn" id="lang-nl" title="Nederlands" aria-label="Nederlands"></button>
       <button class="flag-btn" id="lang-en" title="English" aria-label="English"></button>
@@ -611,6 +664,14 @@
       <button id="clear-cache" class="footer-action">Cache wissen</button>
       <span id="footer-status" class="footer-status"></span>
     </footer>
+  </div>
+
+  <div class="series-info-backdrop" id="series-info-backdrop" hidden>
+    <div class="series-info-modal" role="dialog" aria-modal="true" aria-labelledby="series-info-title" aria-hidden="true">
+      <button class="series-info-close" id="series-info-close" aria-label="Close">×</button>
+      <h2 class="series-info-title" id="series-info-title"></h2>
+      <div class="series-info-body" id="series-info-body"></div>
+    </div>
   </div>
 
   <div class="coach-modal-backdrop" id="coach-modal-backdrop" hidden>
@@ -691,6 +752,9 @@ const TRANSLATIONS = {
   nl: {
     title:    "Dutch Blood Bowl Tournament Series",
     tagline:  "Toernooiresultaten &amp; competitiestand",
+    seriesInfoBtn: "Hoe werkt de serie?",
+    seriesInfoTitle: "Hoe de serie werkt",
+    seriesInfoBody: "<p>Deze serie volgt hoe coaches over een seizoen van ongeveer een jaar presteren. De stand wordt opgebouwd uit de punten die coaches op de toernooien in dat seizoen behalen.</p><p>Niet elk toernooi telt eeuwig mee: een nieuwe editie vervangt de vorige, en oudere resultaten vervallen na ongeveer een jaar. Van de toernooien die nog in het bereik vallen, tellen er altijd de beste helft mee. De toernooienlijst laat zien welke events actief zijn, nog gespeeld moeten worden of historisch zijn.</p><p>Als je op een coachnaam in de stand klikt, zie je per toernooi hoeveel punten die coach heeft behaald. De regels voor de puntentelling blijven tijdens een seizoen hetzelfde.</p>",
     tabStandings: "Competitiestand",
     tabResults:   "Toernooien",
     standingsTitle: "Competitiestand",
@@ -736,6 +800,7 @@ const TRANSLATIONS = {
       coachModalPosition: "Positie",
       coachModalNafHint: "Open NAF-pagina in nieuw venster",
       coachModalClose: "Sluiten",
+      coachModalSummary: "{name} nam deel aan {attended} van de {total} toernooien in het afgelopen jaar. De top {counted} resultaten tellen mee.",
       months: ["jan","feb","mrt","apr","mei","jun","jul","aug","sep","okt","nov","dec"],
     cols: { pos:"#", name:"Coach", nafnr:"NAF #", points:"Punten",
             participant:"Coach", nafnumber:"NAF #", team:"Team" },
@@ -743,6 +808,9 @@ const TRANSLATIONS = {
   en: {
     title:    "Dutch Blood Bowl Tournament Series",
     tagline:  "Tournament results &amp; league standings",
+    seriesInfoBtn: "How the series works",
+    seriesInfoTitle: "How the series works",
+    seriesInfoBody: "<p>This series tracks how coaches perform over a season of roughly one year. The standings are built from the points coaches earn at the tournaments in that season.</p><p>Not every tournament counts forever: a new edition replaces the previous one, and older results expire after about a year. From the tournaments still in range, only the best half count toward the standings. The tournament list shows which events are active, still pending, or historical.</p><p>Click a coach name in the standings to see how many points that coach earned at each tournament. The scoring rules stay the same throughout a season.</p>",
     tabStandings: "Standings",
     tabResults:   "Tournaments",
     standingsTitle: "League standings",
@@ -788,6 +856,7 @@ const TRANSLATIONS = {
       coachModalPosition: "Position",
       coachModalNafHint: "Open NAF page in a new window",
       coachModalClose: "Close",
+      coachModalSummary: "{name} took part in {attended} of the {total} tournaments in the past year. The top {counted} results count.",
       months: ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"],
     cols: { pos:"#", name:"Coach", nafnr:"NAF #", points:"Points",
             participant:"Coach", nafnumber:"NAF #", team:"Team" },
@@ -1086,7 +1155,8 @@ function getCoachModalData(row, rank = null) {
     naf: (row?.[nafCol] || "").trim(),
     rank: Number.isFinite(rank) ? rank : null,
     totalPoints: Number.isFinite(totalPoints) ? totalPoints : 0,
-    history: rankedHistory
+    history: rankedHistory,
+    activeTournamentCount
   };
 }
 
@@ -1116,8 +1186,15 @@ function renderCoachModal() {
   const data = getCoachModalData(activeCoachModalRow, activeCoachModalRank);
   title.textContent = data.name || t("coachModalTitle");
   subtitle.textContent = t("coachModalSubtitle");
+  const attendedCount = data.history.filter(item => item.activeNow).length;
+  const countedCount = data.history.filter(item => item.counts).length;
   const summaryHost = document.getElementById("coach-modal-summary");
   if (summaryHost) {
+    const summaryText = (t("coachModalSummary") || "")
+      .replace("{name}", esc(data.name || t("coachModalTitle")))
+      .replace("{attended}", String(attendedCount))
+      .replace("{total}", String(data.activeTournamentCount))
+      .replace("{counted}", String(countedCount));
     summaryHost.innerHTML = `
       <div class="coach-modal-metric">
         <span class="coach-modal-metric-label">${t("coachModalTotal")}</span>
@@ -1126,6 +1203,9 @@ function renderCoachModal() {
       <div class="coach-modal-metric">
         <span class="coach-modal-metric-label">${t("coachModalPosition")}</span>
         <strong>${data.rank ? `#${data.rank}` : "—"}</strong>
+      </div>
+      <div class="coach-modal-metric" style="flex-basis:100%; justify-content:center;">
+        <span>${summaryText}</span>
       </div>
     `;
   }
@@ -1176,6 +1256,43 @@ function closeCoachModal() {
   activeCoachModalRow = null;
   activeCoachModalRank = null;
   renderCoachModal();
+}
+
+let activeSeriesInfoModal = false;
+
+function renderSeriesInfoModal() {
+  const backdrop = document.getElementById("series-info-backdrop");
+  const modal = backdrop?.querySelector('.series-info-modal');
+  const title = document.getElementById("series-info-title");
+  const body = document.getElementById("series-info-body");
+  if (!backdrop || !modal || !title || !body) return;
+
+  if (!activeSeriesInfoModal) {
+    backdrop.hidden = true;
+    backdrop.style.display = "none";
+    modal.hidden = true;
+    modal.style.display = "none";
+    modal.setAttribute('aria-hidden', 'true');
+    return;
+  }
+
+  title.textContent = t("seriesInfoTitle");
+  body.innerHTML = t("seriesInfoBody");
+  backdrop.hidden = false;
+  backdrop.style.display = "flex";
+  modal.hidden = false;
+  modal.style.display = "block";
+  modal.setAttribute('aria-hidden', 'false');
+}
+
+function openSeriesInfoModal() {
+  activeSeriesInfoModal = true;
+  renderSeriesInfoModal();
+}
+
+function closeSeriesInfoModal() {
+  activeSeriesInfoModal = false;
+  renderSeriesInfoModal();
 }
 
 function loading(host, msg) {
@@ -1673,6 +1790,8 @@ function applyStaticLang() {
   document.documentElement.lang = LANG;
   document.getElementById("t-title").textContent     = t("title");
   document.getElementById("t-tagline").innerHTML     = t("tagline");
+  const infoBtn = document.getElementById("series-info-btn");
+  if (infoBtn) infoBtn.textContent = t("seriesInfoBtn");
   document.getElementById("t-tab-standings").textContent = t("tabStandings");
   document.getElementById("t-tab-results").textContent   = t("tabResults");
   document.getElementById("t-footer").innerHTML =
@@ -1706,6 +1825,9 @@ document.getElementById("lang-en").innerHTML = FLAG_GB;
 
 const coachModalBackdrop = document.getElementById("coach-modal-backdrop");
 const coachModalClose = document.getElementById("coach-modal-close");
+const seriesInfoBackdrop = document.getElementById("series-info-backdrop");
+const seriesInfoBtn = document.getElementById("series-info-btn");
+const seriesInfoClose = document.getElementById("series-info-close");
 if (coachModalBackdrop) {
   coachModalBackdrop.addEventListener("click", (e) => {
     if (e.target === coachModalBackdrop) closeCoachModal();
@@ -1718,10 +1840,33 @@ if (coachModalClose) {
     closeCoachModal();
   });
 }
+if (seriesInfoBackdrop) {
+  seriesInfoBackdrop.addEventListener("click", (e) => {
+    if (e.target === seriesInfoBackdrop) closeSeriesInfoModal();
+  });
+}
+if (seriesInfoBtn) {
+  seriesInfoBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openSeriesInfoModal();
+  });
+}
+if (seriesInfoClose) {
+  seriesInfoClose.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeSeriesInfoModal();
+  });
+}
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && activeCoachModalRow) closeCoachModal();
+  if (e.key === "Escape") {
+    if (activeSeriesInfoModal) closeSeriesInfoModal();
+    else if (activeCoachModalRow) closeCoachModal();
+  }
 });
 renderCoachModal();
+renderSeriesInfoModal();
 
 function setLang(lang) {
   if (lang === LANG) return;
